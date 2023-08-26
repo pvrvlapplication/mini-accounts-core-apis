@@ -9,7 +9,9 @@
 from .views import CompanyViewSet, BranchViewSet
 from rest_framework.routers import DefaultRouter
 
+app_name = 'api'
+
 router = DefaultRouter()
-router.register(r'company', CompanyViewSet, basename='company')
-router.register(r'branch', BranchViewSet, basename='branch')
+router.register(r"company", CompanyViewSet, basename="company")
+router.register(r"branch", BranchViewSet, basename="branch")
 urlpatterns = router.urls
