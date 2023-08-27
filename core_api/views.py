@@ -1,17 +1,8 @@
 # accounts/views.py
 
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from .models import Branch, Company
-from .serializers import BranchSerializer, CompanySerializer
-from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
+from .models import Branch, Company, User
+from .serializers import BranchSerializer, CompanySerializer, UserSerializer
 from rest_framework import viewsets
 
 # class CompanyView(APIView):
@@ -51,6 +42,15 @@ from rest_framework import viewsets
 #             return Response({"status": "success", "data": f"{comp_obj.name} Deleted Successfully."}, status=status.HTTP_200_OK)
 #         else:
 #             return Response({"status": "error", "data": f"{id} Not Found."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and Branch user instances.
+    """
+
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
 
 
 class CompanyViewSet(viewsets.ModelViewSet):

@@ -5,14 +5,26 @@ from .models import Branch, User, Company
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username", "email", "password"]
+        fields = ["username", "email", "password", "branch", "id"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        user = User(username=validated_data["username"], email=validated_data["email"])
+        user = User(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            branch=validated_data["branch"],
+        )
         user.set_password(validated_data["password"])
         user.save()
         return user
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `User` instance, given the validated data.
+        """
+        instance.branch = validated_data.get("branch", instance.branch)
+        instance.save()
+        return instance
 
 
 class CompanySerializer(serializers.ModelSerializer):

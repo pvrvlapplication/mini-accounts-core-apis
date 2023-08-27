@@ -70,4 +70,4 @@ class User(AbstractUser):
         Branch, on_delete=models.CASCADE, null=True, blank=True
     )  # Branch
     mobile = models.CharField(max_length=12)  # Mobile number
-    role = models.CharField(choices=USER_ROLES, max_length=15)  # role of the user
+    # role = models.CharField(choices=USER_ROLES, max_length=15)  # role of the user
