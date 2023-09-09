@@ -1,8 +1,15 @@
 # accounts/views.py
 
 from rest_framework.permissions import IsAuthenticated
-from .models import Branch, Company, User
-from .serializers import BranchSerializer, CompanySerializer, UserSerializer
+from .models import Address, Branch, Company, Party, Product, User
+from .serializers import (
+    AddressSerializer,
+    BranchSerializer,
+    CompanySerializer,
+    PartySerializer,
+    ProductSerializer,
+    UserSerializer,
+)
 from rest_framework import viewsets
 
 # class CompanyView(APIView):
@@ -46,7 +53,7 @@ from rest_framework import viewsets
 
 class UserViewSet(viewsets.ModelViewSet):
     """
-    A viewset for viewing and Branch user instances.
+    A viewset for user instances.
     """
 
     serializer_class = UserSerializer
@@ -55,7 +62,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """
-    A viewset for viewing and editing Company instances.
+    A viewset for Company instances.
     """
 
     serializer_class = CompanySerializer
@@ -64,8 +71,38 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
 class BranchViewSet(viewsets.ModelViewSet):
     """
-    A viewset for viewing and Branch user instances.
+    A viewset for branch instances.
     """
 
     serializer_class = BranchSerializer
     queryset = Branch.objects.all()
+
+
+# -----Product Viewset
+class ProductViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for Product instances.
+    """
+
+    serializer_class = ProductSerializer
+    queryset = Product.objects.all()
+
+
+# -----Party Viewset
+class PartyViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for Party instances.
+    """
+
+    serializer_class = PartySerializer
+    queryset = Party.objects.all()
+
+
+# -----Party Address Viewset
+class AddressViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for address instances.
+    """
+
+    serializer_class = AddressSerializer
+    queryset = Address.objects.all()

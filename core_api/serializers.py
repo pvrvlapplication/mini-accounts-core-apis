@@ -1,11 +1,14 @@
 from rest_framework import serializers
-from .models import Branch, User, Company
+from .models import Address, Branch, Party, PurchaseOrder, PurchaseOrderItem, User, Company, Product
+from rest_framework.serializers import ReadOnlyField
 
 
 class UserSerializer(serializers.ModelSerializer):
+    branch_name = ReadOnlyField(source="branch.name")
+
     class Meta:
         model = User
-        fields = ["username", "email", "password", "branch", "id"]
+        fields = ["username", "email", "password", "branch", "id", "branch_name"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
@@ -57,7 +60,6 @@ class BranchSerializer(serializers.ModelSerializer):
         Update and return an existing `Branch` instance, given the validated data.
         """
         instance.name = validated_data.get("name", instance.name)
-        instance.company = validated_data.get("company", instance.company)
         instance.dno = validated_data.get("dno", instance.dno)
         instance.area = validated_data.get("area", instance.area)
         instance.city = validated_data.get("city", instance.city)
@@ -68,5 +70,105 @@ class BranchSerializer(serializers.ModelSerializer):
         instance.mobile = validated_data.get("mobile", instance.mobile)
         instance.phone = validated_data.get("phone", instance.phone)
         instance.pan = validated_data.get("pan", instance.pan)
+        instance.save()
+        return instance
+
+
+# -------Product Serializer
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = "__all__"
+
+    def create(self, validated_data):
+        return Product.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Product` instance, given the validated data.
+        """
+        instance.name = validated_data.get("name", instance.name)
+        instance.gst_slab = validated_data.get("gst_slab", instance.gst_slab)
+        instance.hsn = validated_data.get("hsn", instance.hsn)
+        instance.save()
+        return instance
+
+
+# -------Party Serializer
+class PartySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Party
+        fields = "__all__"
+        extra_kwargs = {"branch": {"read_only": True}}
+
+    def create(self, validated_data):
+        return Party.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Party` instance, given the validated data.
+        """
+        instance.name = validated_data.get("name", instance.name)
+        instance.gst = validated_data.get("gst", instance.gst)
+        instance.pan = validated_data.get("pan", instance.pan)
+        instance.party_type = validated_data.get("party_type", instance.party_type)
+
+        instance.save()
+        return instance
+
+
+# -------Party Address Serializer
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = "__all__"
+        extra_kwargs = {"party": {"read_only": True}}
+
+    def create(self, validated_data):
+        return Address.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Address` instance, given the validated data.
+        """
+        instance.dno = validated_data.get("dno", instance.dno)
+        instance.area = validated_data.get("area", instance.area)
+        instance.city = validated_data.get("city", instance.city)
+        instance.district = validated_data.get("district", instance.district)
+        instance.state = validated_data.get("state", instance.state)
+        instance.country = validated_data.get("country", instance.country)
+        instance.mobile = validated_data.get("mobile", instance.mobile)
+        instance.phone = validated_data.get("phone", instance.phone)
+
+        instance.save()
+        return instance
+
+
+# ----Purchase Seralizers
+class POSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PurchaseOrder
+        fields = "__all__"
+        extra_kwargs = {"po": {"read_only": True}}
+
+    def create(self, validated_data):
+        return PurchaseOrder.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Purchase order` instance, given the validated data.
+        """
+        instance.po_number = validated_data.get("po_number", instance.po_number)
+        instance.vendor = validated_data.get("vendor", instance.vendor)
+        instance.address = validated_data.get("address", instance.address)
+        instance.shipping_address = validated_data.get("shipping_address", instance.shipping_address)
+        instance.date = validated_data.get("date", instance.date)
+        instance.comment = validated_data.get("comment", instance.comment)
+        instance.gst_type = validated_data.get("gst_type", instance.gst_type)
+        instance.dno = validated_data.get("dno", instance.dno)
+        
         instance.save()
         return instance
