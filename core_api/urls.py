@@ -6,8 +6,9 @@
 #     path('company/<int:id>/', CompanyView.as_view())
 # ]
 
-from .views import AddressViewSet, CompanyViewSet, BranchViewSet, PartyViewSet, ProductViewSet, UserViewSet
+from .views import AddressViewSet, CompanyViewSet, BranchViewSet, PartyViewSet, ProductViewSet, UserViewSet, POView
 from rest_framework.routers import DefaultRouter
+from django.urls import path
 
 app_name = 'api'
 
@@ -19,3 +20,4 @@ router.register(r"product", ProductViewSet, basename="product")
 router.register(r"party", PartyViewSet, basename="party")
 router.register(r"partyAddress", AddressViewSet, basename="partyAddress")
 urlpatterns = router.urls
+urlpatterns.append(path('purchaseOrder/', POView.as_view(), name="purchaseOrder"),)

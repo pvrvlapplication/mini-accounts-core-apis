@@ -1,16 +1,30 @@
 # accounts/views.py
 
 from rest_framework.permissions import IsAuthenticated
-from .models import Address, Branch, Company, Party, Product, User
+from .models import (
+    Address,
+    Branch,
+    Company,
+    Party,
+    Product,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    User,
+)
 from .serializers import (
     AddressSerializer,
     BranchSerializer,
     CompanySerializer,
+    POItemSerializer,
+    POSerializer,
     PartySerializer,
     ProductSerializer,
     UserSerializer,
 )
 from rest_framework import viewsets
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 # class CompanyView(APIView):
 
@@ -106,3 +120,42 @@ class AddressViewSet(viewsets.ModelViewSet):
 
     serializer_class = AddressSerializer
     queryset = Address.objects.all()
+
+
+# -----Purchase Order Viewset
+
+
+class POView(APIView):
+    """
+    List all PO's, or create a new PO.
+    """
+
+    def get(self, request, format=None):
+        purchase_orders = PurchaseOrder.objects.filter(vendor__user_id=request.user.id)
+        data = []
+        for po in purchase_orders:
+            po_serializer = POSerializer(po)
+            po_data = po_serializer.data
+            purchase_order_items = PurchaseOrderItem.objects.filter(po__id=po.id)
+            item_data = []
+            for item in purchase_order_items:
+                po_item_serializer = POItemSerializer(item)
+                item_data.append(po_item_serializer.data)
+            po_data.update({"po_items": item_data})
+            data.append(po_data)
+        return Response(data)
+
+    def post(self, request, format=None):
+        po_serializer = POSerializer(data=request.data.get("po_data"))
+        if po_serializer.is_valid():
+            po_serializer.save()
+            for data in request.data.get("poi_data"):
+                data.update({"po": po_serializer.data.get("id")})
+                po_item_serializer = POItemSerializer(data=data)
+                if po_item_serializer.is_valid():
+                    po_item_serializer.save()
+                return Response(
+                    po_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response(po_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(po_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

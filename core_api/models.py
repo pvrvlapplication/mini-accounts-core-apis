@@ -131,6 +131,8 @@ class Address(models.Model):
         validators=[
             RegexValidator(MOBILE_REGEX, message="Enter a Valid Indian Phone Number")
         ],
+        null=True,
+        blank=True,
     )  # Phone number
     primary = models.BooleanField(
         null=True, blank=True
@@ -163,6 +165,12 @@ class PurchaseOrder(models.Model):
     branch = models.ForeignKey(Branch, models.CASCADE)
     comment = models.TextField()
     gst_type = models.CharField(choices=GST_CHOICES, max_length=10)
+    taxble_value = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    invoice_value = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True
+    )
 
     def __str__(self):
         return self.po_number
@@ -175,26 +183,29 @@ class PurchaseOrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    sgst = models.DecimalField(max_digits=10, decimal_places=2)
-    cgst = models.DecimalField(max_digits=10, decimal_places=2)
-    igst = models.DecimalField(max_digits=10, decimal_places=2)
-    taxble_value = models.DecimalField(max_digits=15, decimal_places=2)
-    invoice_value = models.DecimalField(max_digits=20, decimal_places=2)
+    sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    cgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    igst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    taxble_value = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    invoice_value = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True
+    )
 
     def __str__(self):
         return self.po.po_number
 
     def save(self, *args, **kwargs):
         self.taxble_value = self.price * self.quantity
-        self.invoice_value = self.taxble_value + self.sgst + self.cgst + self.igst
         if self.po.gst_type == "I":
             self.sgst = (
-                self.taxble_value % self.product.gst_slab / 2
+                ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
                 if self.product.gst_slab != 0
                 else 0
             )
             self.cgst = (
-                self.taxble_value % self.product.gst_slab / 2
+                ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
                 if self.product.gst_slab != 0
                 else 0
             )
@@ -203,7 +214,7 @@ class PurchaseOrderItem(models.Model):
             self.sgst = 0
             self.cgst = 0
             self.igst = (
-                self.taxble_value % self.product.gst_slab
+                (float(self.taxble_value) * float(self.product.gst_slab)) / (100)
                 if self.product.gst_slab != 0
                 else 0
             )
@@ -211,4 +222,5 @@ class PurchaseOrderItem(models.Model):
             self.sgst = 0
             self.cgst = 0
             self.igst = 0
+        self.invoice_value = float(self.taxble_value) + self.sgst + self.cgst + self.igst
         super(PurchaseOrderItem, self).save(*args, **kwargs)
