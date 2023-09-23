@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 import datetime
+from django.db.models import Sum
 
 GST_REGEX = "\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}"
 MOBILE_REGEX = "\+?\d[\d -]{8,12}\d"
@@ -165,15 +166,15 @@ class PurchaseOrder(models.Model):
     branch = models.ForeignKey(Branch, models.CASCADE)
     comment = models.TextField()
     gst_type = models.CharField(choices=GST_CHOICES, max_length=10)
-    taxble_value = models.DecimalField(
-        max_digits=15, decimal_places=2, null=True, blank=True
-    )
-    invoice_value = models.DecimalField(
-        max_digits=20, decimal_places=2, null=True, blank=True
-    )
 
     def __str__(self):
-        return self.po_number
+        return str(self.po_number)
+    
+    def taxble_value(self):
+        return PurchaseOrderItem.objects.filter(po__id=self.id).aggregate(Sum('taxble_value'))
+    
+    def invoice_value(self):
+        return PurchaseOrderItem.objects.filter(po__id=self.id).aggregate(Sum('invoice_value'))
 
 
 class PurchaseOrderItem(models.Model):
@@ -194,7 +195,7 @@ class PurchaseOrderItem(models.Model):
     )
 
     def __str__(self):
-        return self.po.po_number
+        return str(self.po.po_number)
 
     def save(self, *args, **kwargs):
         self.taxble_value = self.price * self.quantity
@@ -222,7 +223,9 @@ class PurchaseOrderItem(models.Model):
             self.sgst = 0
             self.cgst = 0
             self.igst = 0
-        self.invoice_value = float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        self.invoice_value = (
+            float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        )
         super(PurchaseOrderItem, self).save(*args, **kwargs)
 
 
@@ -232,8 +235,14 @@ class Purchase(models.Model):
     invoice_no = models.CharField(max_length=35)
 
     def __str__(self):
-        return self.invoice_no
+        return str(self.invoice_no)
     
+    def taxble_value(self):
+        return PurchaseItem.objects.filter(purchase__id=self.id).aggregate(Sum('taxble_value'))
+    
+    def invoice_value(self):
+        return PurchaseItem.objects.filter(purchase__id=self.id).aggregate(Sum('invoice_value'))
+
 
 class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE)
@@ -251,7 +260,7 @@ class PurchaseItem(models.Model):
     )
 
     def __str__(self):
-        return self.purchase.po.po_number
+        return str(self.id)
 
     def save(self, *args, **kwargs):
         self.taxble_value = self.price * self.quantity
@@ -279,7 +288,9 @@ class PurchaseItem(models.Model):
             self.sgst = 0
             self.cgst = 0
             self.igst = 0
-        self.invoice_value = float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        self.invoice_value = (
+            float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        )
         super(PurchaseItem, self).save(*args, **kwargs)
 
 
@@ -302,15 +313,15 @@ class SaleOrder(models.Model):
     branch = models.ForeignKey(Branch, models.CASCADE)
     comment = models.TextField()
     gst_type = models.CharField(choices=GST_CHOICES, max_length=10)
-    taxble_value = models.DecimalField(
-        max_digits=15, decimal_places=2, null=True, blank=True
-    )
-    invoice_value = models.DecimalField(
-        max_digits=20, decimal_places=2, null=True, blank=True
-    )
 
     def __str__(self):
         return self.so_number
+    
+    def taxble_value(self):
+        return SaleOrderItem.objects.filter(so__id=self.id).aggregate(Sum('taxble_value'))
+    
+    def invoice_value(self):
+        return SaleOrderItem.objects.filter(so__id=self.id).aggregate(Sum('invoice_value'))
 
 
 class SaleOrderItem(models.Model):
@@ -359,7 +370,9 @@ class SaleOrderItem(models.Model):
             self.sgst = 0
             self.cgst = 0
             self.igst = 0
-        self.invoice_value = float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        self.invoice_value = (
+            float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        )
         super(SaleOrderItem, self).save(*args, **kwargs)
 
 
@@ -370,7 +383,13 @@ class Sale(models.Model):
 
     def __str__(self):
         return self.invoice_no
+
+    def taxble_value(self):
+        return PurchaseItem.objects.filter(sale__id=self.id).aggregate(Sum('taxble_value'))
     
+    def invoice_value(self):
+        return PurchaseItem.objects.filter(sale__id=self.id).aggregate(Sum('invoice_value'))
+
 
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
@@ -416,7 +435,7 @@ class SaleItem(models.Model):
             self.sgst = 0
             self.cgst = 0
             self.igst = 0
-        self.invoice_value = float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        self.invoice_value = (
+            float(self.taxble_value) + self.sgst + self.cgst + self.igst
+        )
         super(SaleItem, self).save(*args, **kwargs)
-
-

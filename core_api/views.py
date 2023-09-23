@@ -7,6 +7,8 @@ from .models import (
     Company,
     Party,
     Product,
+    Purchase,
+    PurchaseItem,
     PurchaseOrder,
     PurchaseOrderItem,
     User,
@@ -19,12 +21,16 @@ from .serializers import (
     POSerializer,
     PartySerializer,
     ProductSerializer,
+    PurchaseItemSerializer,
+    PurchaseSerializer,
     UserSerializer,
 )
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Sum
+from django.db import DatabaseError, transaction
 
 # class CompanyView(APIView):
 
@@ -142,20 +148,95 @@ class POView(APIView):
                 po_item_serializer = POItemSerializer(item)
                 item_data.append(po_item_serializer.data)
             po_data.update({"po_items": item_data})
+            po_data.update(
+                {"taxble_value": purchase_order_items.aggregate(Sum("taxble_value"))}
+            )
+            po_data.update(
+                {"invoice_value": purchase_order_items.aggregate(Sum("invoice_value"))}
+            )
             data.append(po_data)
         return Response(data)
 
     def post(self, request, format=None):
-        po_serializer = POSerializer(data=request.data.get("po_data"))
-        if po_serializer.is_valid():
-            po_serializer.save()
-            for data in request.data.get("poi_data"):
-                data.update({"po": po_serializer.data.get("id")})
-                po_item_serializer = POItemSerializer(data=data)
-                if po_item_serializer.is_valid():
-                    po_item_serializer.save()
-                return Response(
-                    po_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        try:
+            with transaction.atomic():
+                po_serializer = POSerializer(data=request.data.get("po_data"))
+                if po_serializer.is_valid():
+                    po_serializer.save()
+                    for data in request.data.get("poi_data"):
+                        data.update({"po": po_serializer.data.get("id")})
+                        po_item_serializer = POItemSerializer(data=data)
+                        if po_item_serializer.is_valid():
+                            po_item_serializer.save()
+                        else:
+                            transaction.rollback()
+                            return Response(
+                                po_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                            )
+                    return Response(po_serializer.data, status=status.HTTP_201_CREATED)
+                return Response(po_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError:
+            return Response(
+                po_item_serializer.errors or po_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+# -----Purchase Viewset
+
+
+class PurchaseView(APIView):
+    """
+    List all Purchases's, or create a new Purchase.
+    """
+
+    def get(self, request, format=None):
+        purchases = Purchase.objects.filter(po__vendor__user_id=request.user.id)
+        data = []
+        for purchase in purchases:
+            purchase_serializer = PurchaseSerializer(purchase)
+            purchase_data = purchase_serializer.data
+            purchase_items = PurchaseItem.objects.filter(purchase__id=purchase.id)
+            item_data = []
+            for item in purchase_items:
+                purchase_item_serializer = PurchaseItemSerializer(item)
+                item_data.append(purchase_item_serializer.data)
+            purchase_data.update({"purchase_items": item_data})
+            purchase_data.update(
+                {"taxble_value": purchase_items.aggregate(Sum("taxble_value"))}
+            )
+            purchase_data.update(
+                {"invoice_value": purchase_items.aggregate(Sum("invoice_value"))}
+            )
+            data.append(purchase_data)
+        return Response(data)
+
+    @transaction.atomic
+    def post(self, request, format=None):
+        try:
+            with transaction.atomic():
+                purchase_serializer = PurchaseSerializer(
+                    data=request.data.get("purchase_data")
                 )
-            return Response(po_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(po_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if purchase_serializer.is_valid():
+                    purchase_serializer.save()
+                    for data in request.data.get("purchase_item_data"):
+                        data.update({"purchase": purchase_serializer.data.get("id")})
+                        purchase_item_serializer = PurchaseItemSerializer(data=data)
+                        if purchase_item_serializer.is_valid():
+                            purchase_item_serializer.save()
+                        else:
+                            transaction.rollback()
+                            return Response(
+                                purchase_item_serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                    return Response(
+                        purchase_serializer.data, status=status.HTTP_201_CREATED
+                    )
+                return Response(
+                    purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+        except DatabaseError:
+            return Response(
+                purchase_item_serializer.errors or purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
