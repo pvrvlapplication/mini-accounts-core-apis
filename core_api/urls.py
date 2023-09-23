@@ -21,4 +21,6 @@ router.register(r"party", PartyViewSet, basename="party")
 router.register(r"partyAddress", AddressViewSet, basename="partyAddress")
 urlpatterns = router.urls
 urlpatterns.append(path('purchaseOrder/', POView.as_view(), name="purchaseOrder"),)
+urlpatterns.append(path('purchaseOrder/<int:id>/', POView.as_view(), name="purchaseOrder"),)
 urlpatterns.append(path('purchase/', PurchaseView.as_view(), name="purchase"),)
+urlpatterns.append(path('purchase/<int:id>/', PurchaseView.as_view(), name="purchase"),)

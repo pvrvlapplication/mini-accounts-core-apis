@@ -171,7 +171,7 @@ class POSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrder
         fields = "__all__"
-        extra_kwargs = {"po": {"read_only": True}}
+        #extra_kwargs = {"po": {"read_only": True}, "branch": {"read_only": True}}
 
     def create(self, validated_data):
         return PurchaseOrder.objects.create(**validated_data)
@@ -189,7 +189,6 @@ class POSerializer(serializers.ModelSerializer):
         instance.date = validated_data.get("date", instance.date)
         instance.comment = validated_data.get("comment", instance.comment)
         instance.gst_type = validated_data.get("gst_type", instance.gst_type)
-        instance.dno = validated_data.get("dno", instance.dno)
 
         instance.save()
         return instance
@@ -201,6 +200,7 @@ class POItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrderItem
         fields = "__all__"
+        #extra_kwargs = {"po": {"read_only": True}}
 
     def create(self, validated_data):
         return PurchaseOrderItem.objects.create(**validated_data)
@@ -211,7 +211,7 @@ class POItemSerializer(serializers.ModelSerializer):
         """
         instance.product = validated_data.get("product", instance.product)
         instance.price = validated_data.get("price", instance.price)
-        instance.quantiry = validated_data.get("quantiry", instance.quantiry)
+        instance.quantity = validated_data.get("quantity", instance.quantity)
 
         instance.save()
         return instance
@@ -226,7 +226,6 @@ class PurchaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Purchase
         fields = "__all__"
-        # extra_kwargs = {"po": {"read_only": True}}
 
     def create(self, validated_data):
         return Purchase.objects.create(**validated_data)
@@ -235,7 +234,6 @@ class PurchaseSerializer(serializers.ModelSerializer):
         """
         Update and return an existing `Purchase` instance, given the validated data.
         """
-        instance.po_number = validated_data.get("po_number", instance.po_number)
         instance.date = validated_data.get("date", instance.date)
         instance.invoice_no = validated_data.get("invoice_no", instance.invoice_no)
 
@@ -259,7 +257,7 @@ class PurchaseItemSerializer(serializers.ModelSerializer):
         """
         instance.product = validated_data.get("product", instance.product)
         instance.price = validated_data.get("price", instance.price)
-        instance.quantiry = validated_data.get("quantiry", instance.quantiry)
+        instance.quantity = validated_data.get("quantity", instance.quantity)
 
         instance.save()
         return instance
