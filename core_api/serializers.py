@@ -112,7 +112,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class PartySerializer(serializers.ModelSerializer):
     class Meta:
         model = Party
-        fields = "__all__"
+        exclude = ['user']
         extra_kwargs = {"branch": {"read_only": True}}
 
     def create(self, validated_data):
