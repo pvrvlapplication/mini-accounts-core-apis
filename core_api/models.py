@@ -74,6 +74,10 @@ class User(AbstractUser):
     mobile = models.CharField(max_length=12)  # Mobile number
     # role = models.CharField(choices=USER_ROLES, max_length=15)  # role of the user
 
+    def __str__(self):
+        return self.username
+
+
 
 # -------Product Models
 

@@ -78,7 +78,10 @@ class UserViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = UserSerializer
-    queryset = User.objects.all()
+    # queryset = User.objects.all()
+    def get_queryset(self):
+        print(self.request.user.id)
+        return User.objects.filter(id=self.request.user.id)
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -104,7 +107,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     A viewset for Product instances.
     """
-
+    
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
 
@@ -116,7 +119,9 @@ class PartyViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PartySerializer
-    queryset = Party.objects.all()
+    # queryset = Party.objects.all()
+    def get_queryset(self):
+        Party.objects.get(pk=self.reuest.user)
 
 
 # -----Party Address Viewset

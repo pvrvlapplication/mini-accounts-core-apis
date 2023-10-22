@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["username", "email", "password", "branch", "id", "branch_name"]
-        extra_kwargs = {"password": {"write_only": True}}
+        #extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
         user = User(
@@ -91,9 +91,10 @@ class BranchSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ["name", "gst_slab", "hsn"]
+        fields = ["name", "gst_slab", "hsn", "id"]
 
     def create(self, validated_data):
+        print(self.context.get("request").user)
         validated_data.update({"user_id": self.context.get("request").user.id})
         return Product.objects.create(**validated_data)
 
