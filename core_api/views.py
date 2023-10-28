@@ -119,9 +119,9 @@ class PartyViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PartySerializer
-    # queryset = Party.objects.all()
-    def get_queryset(self):
-        Party.objects.get(pk=self.reuest.user)
+    queryset = Party.objects.all()
+    # def get_queryset(self):
+    #     Party.objects.get(pk=self.request.user.id)
 
 
 # -----Party Address Viewset
