@@ -138,9 +138,10 @@ class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = "__all__"
-        extra_kwargs = {"party": {"read_only": True}}
+        #extra_kwargs = {"party": {"read_only": True}}
 
     def create(self, validated_data):
+        print(validated_data)
         return Address.objects.create(**validated_data)
 
     def update(self, instance, validated_data):

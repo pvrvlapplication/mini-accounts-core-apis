@@ -167,7 +167,7 @@ class PurchaseOrder(models.Model):
         Address, on_delete=models.CASCADE, related_name="po_shipping"
     )
     date = models.DateTimeField(auto_now_add=True)
-    branch = models.ForeignKey(Branch, models.CASCADE)
+    branch = models.ForeignKey(Branch, models.CASCADE, null=True, blank=True)
     comment = models.TextField()
     gst_type = models.CharField(choices=GST_CHOICES, max_length=10)
 

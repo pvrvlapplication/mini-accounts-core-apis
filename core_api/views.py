@@ -176,6 +176,7 @@ class POView(APIView):
     def post(self, request, format=None):
         try:
             with transaction.atomic():
+                print(request.data.get("poi_data"))
                 po_serializer = POSerializer(data=request.data.get("po_data"))
                 if po_serializer.is_valid():
                     po_serializer.save()
