@@ -10,16 +10,12 @@ from .models import (
     Product,
     Purchase,
     PurchaseItem,
-    PurchaseOrder,
-    PurchaseOrderItem,
     User,
 )
 from .serializers import (
     AddressSerializer,
     BranchSerializer,
     CompanySerializer,
-    POItemSerializer,
-    POSerializer,
     PartySerializer,
     ProductSerializer,
     PurchaseItemSerializer,
@@ -137,115 +133,115 @@ class AddressViewSet(viewsets.ModelViewSet):
 # -----Purchase Order Viewset
 
 
-class POView(APIView):
+# class POView(APIView):
     """
     List all PO's, or create a new PO, Update PO and Delete PO.
     """
 
-    def get(self, request, format=None, id=""):
-        if id:
-            purchase_orders = PurchaseOrder.objects.filter(
-                pk=id, vendor__user_id=request.user.id
-            )
-            if not purchase_orders:
-                return Response([], status=status.HTTP_200_OK)
-        else:
-            purchase_orders = PurchaseOrder.objects.filter(
-                vendor__user_id=request.user.id
-            )
-        data = []
-        for po in purchase_orders:
-            po_serializer = POSerializer(po)
-            po_data = po_serializer.data
-            purchase_order_items = PurchaseOrderItem.objects.filter(po__id=po.id)
-            item_data = []
-            for item in purchase_order_items:
-                po_item_serializer = POItemSerializer(item)
-                item_data.append(po_item_serializer.data)
-            po_data.update({"po_items": item_data})
-            po_data.update(
-                {"taxble_value": purchase_order_items.aggregate(Sum("taxble_value"))}
-            )
-            po_data.update(
-                {"invoice_value": purchase_order_items.aggregate(Sum("invoice_value"))}
-            )
-            data.append(po_data)
-        return Response(data, status=status.HTTP_200_OK)
+    # def get(self, request, format=None, id=""):
+    #     if id:
+    #         purchase_orders = PurchaseOrder.objects.filter(
+    #             pk=id, vendor__user_id=request.user.id
+    #         )
+    #         if not purchase_orders:
+    #             return Response([], status=status.HTTP_200_OK)
+    #     else:
+    #         purchase_orders = PurchaseOrder.objects.filter(
+    #             vendor__user_id=request.user.id
+    #         )
+    #     data = []
+    #     for po in purchase_orders:
+    #         po_serializer = POSerializer(po)
+    #         po_data = po_serializer.data
+    #         purchase_order_items = PurchaseOrderItem.objects.filter(po__id=po.id)
+    #         item_data = []
+    #         for item in purchase_order_items:
+    #             po_item_serializer = POItemSerializer(item)
+    #             item_data.append(po_item_serializer.data)
+    #         po_data.update({"po_items": item_data})
+    #         po_data.update(
+    #             {"taxble_value": purchase_order_items.aggregate(Sum("taxble_value"))}
+    #         )
+    #         po_data.update(
+    #             {"invoice_value": purchase_order_items.aggregate(Sum("invoice_value"))}
+    #         )
+    #         data.append(po_data)
+    #     return Response(data, status=status.HTTP_200_OK)
 
-    @transaction.atomic
-    def post(self, request, format=None):
-        try:
-            with transaction.atomic():
-                print(request.data.get("poi_data"))
-                po_serializer = POSerializer(data=request.data.get("po_data"))
-                if po_serializer.is_valid():
-                    po_serializer.save()
-                    for data in request.data.get("poi_data"):
-                        data.update({"po": po_serializer.data.get("id")})
-                        po_item_serializer = POItemSerializer(data=data)
-                        if po_item_serializer.is_valid():
-                            po_item_serializer.save()
-                        else:
-                            transaction.rollback()
-                            return Response(
-                                po_item_serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST,
-                            )
-                    return Response(po_serializer.data, status=status.HTTP_201_CREATED)
-                return Response(
-                    po_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-                )
-        except DatabaseError:
-            return Response(
-                po_serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    # @transaction.atomic
+    # def post(self, request, format=None):
+    #     try:
+    #         with transaction.atomic():
+    #             print(request.data.get("poi_data"))
+    #             po_serializer = POSerializer(data=request.data.get("po_data"))
+    #             if po_serializer.is_valid():
+    #                 po_serializer.save()
+    #                 for data in request.data.get("poi_data"):
+    #                     data.update({"po": po_serializer.data.get("id")})
+    #                     po_item_serializer = POItemSerializer(data=data)
+    #                     if po_item_serializer.is_valid():
+    #                         po_item_serializer.save()
+    #                     else:
+    #                         transaction.rollback()
+    #                         return Response(
+    #                             po_item_serializer.errors,
+    #                             status=status.HTTP_400_BAD_REQUEST,
+    #                         )
+    #                 return Response(po_serializer.data, status=status.HTTP_201_CREATED)
+    #             return Response(
+    #                 po_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+    #             )
+    #     except DatabaseError:
+    #         return Response(
+    #             po_serializer.errors,
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
 
-    @transaction.atomic
-    def put(self, request, id):
-        try:
-            po_obj = PurchaseOrder.objects.get(id=id, vendor__user_id=request.user.id)
-            with transaction.atomic():
-                po_serializer = POSerializer(po_obj, data=request.data.get("po_data"))
-                if po_serializer.is_valid():
-                    po_serializer.save()
-                    for data in request.data.get("poi_data"):
-                        data.update({"po": po_serializer.data.get("id")})
-                        po_item_obj = PurchaseOrderItem.objects.get(id=data.get("id"))
-                        po_item_serializer = POItemSerializer(po_item_obj, data=data)
-                        if po_item_serializer.is_valid():
-                            po_item_serializer.save()
-                        else:
-                            transaction.rollback()
-                            return Response(
-                                po_item_serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST,
-                            )
-                    return Response(po_serializer.data, status=status.HTTP_201_CREATED)
-                return Response(
-                    po_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-                )
-        except DatabaseError:
-            return Response(
-                po_serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    # @transaction.atomic
+    # def put(self, request, id):
+    #     try:
+    #         po_obj = PurchaseOrder.objects.get(id=id, vendor__user_id=request.user.id)
+    #         with transaction.atomic():
+    #             po_serializer = POSerializer(po_obj, data=request.data.get("po_data"))
+    #             if po_serializer.is_valid():
+    #                 po_serializer.save()
+    #                 for data in request.data.get("poi_data"):
+    #                     data.update({"po": po_serializer.data.get("id")})
+    #                     po_item_obj = PurchaseOrderItem.objects.get(id=data.get("id"))
+    #                     po_item_serializer = POItemSerializer(po_item_obj, data=data)
+    #                     if po_item_serializer.is_valid():
+    #                         po_item_serializer.save()
+    #                     else:
+    #                         transaction.rollback()
+    #                         return Response(
+    #                             po_item_serializer.errors,
+    #                             status=status.HTTP_400_BAD_REQUEST,
+    #                         )
+    #                 return Response(po_serializer.data, status=status.HTTP_201_CREATED)
+    #             return Response(
+    #                 po_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+    #             )
+    #     except DatabaseError:
+    #         return Response(
+    #             po_serializer.errors,
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
 
-    def delete(self, request, id):
-        po_obj = get_object_or_404(
-            PurchaseOrder, pk=id, vendor__user_id=request.user.id
-        )
-        if po_obj:
-            po_obj.delete()
-            return Response(
-                {"status": "success", "data": f"Deleted Successfully."},
-                status=status.HTTP_200_OK,
-            )
-        else:
-            return Response(
-                {"status": "error", "data": f"{id} Not Found."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    # def delete(self, request, id):
+    #     po_obj = get_object_or_404(
+    #         PurchaseOrder, pk=id, vendor__user_id=request.user.id
+    #     )
+    #     if po_obj:
+    #         po_obj.delete()
+    #         return Response(
+    #             {"status": "success", "data": f"Deleted Successfully."},
+    #             status=status.HTTP_200_OK,
+    #         )
+    #     else:
+    #         return Response(
+    #             {"status": "error", "data": f"{id} Not Found."},
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
 
 
 # -----Purchase Viewset
@@ -259,12 +255,12 @@ class PurchaseView(APIView):
     def get(self, request, format=None, id=""):
         if id:
             purchases = Purchase.objects.filter(
-                po__vendor__user_id=request.user.id, pk=id
+                vendor__user_id=request.user.id, pk=id
             )
             if not purchases:
                 return Response([], status=status.HTTP_200_OK)
         else:
-            purchases = Purchase.objects.filter(po__vendor__user_id=request.user.id)
+            purchases = Purchase.objects.all()#filter(vendor__user_id=request.user.id)
 
         data = []
         for purchase in purchases:
@@ -277,10 +273,8 @@ class PurchaseView(APIView):
                 item_data.append(purchase_item_serializer.data)
             purchase_data.update({"purchase_items": item_data})
             purchase_data.update(
-                {"taxble_value": purchase_items.aggregate(Sum("taxble_value"))}
-            )
-            purchase_data.update(
-                {"invoice_value": purchase_items.aggregate(Sum("invoice_value"))}
+                {"taxble_value": purchase_items.aggregate(Sum("taxble_value"))['taxble_value__sum'],
+                 "invoice_value": purchase_items.aggregate(Sum("invoice_value"))['invoice_value__sum']}
             )
             data.append(purchase_data)
         return Response(data)
@@ -351,7 +345,7 @@ class PurchaseView(APIView):
 
     def delete(self, request, id):
         pur_obj = get_object_or_404(
-            Purchase, pk=id, po__vendor__user_id=request.user.id
+            Purchase, pk=id, vendor__user_id=request.user.id
         )
         if pur_obj:
             pur_obj.delete()

@@ -5,8 +5,6 @@ from .models import (
     Party,
     Purchase,
     PurchaseItem,
-    PurchaseOrder,
-    PurchaseOrderItem,
     User,
     Company,
     Product,
@@ -167,56 +165,56 @@ class AddressSerializer(serializers.ModelSerializer):
 # ----PO Serializers
 
 
-class POSerializer(serializers.ModelSerializer):
-    """This serializer is used to serialize Purchase Order objects."""
+# class POSerializer(serializers.ModelSerializer):
+#     """This serializer is used to serialize Purchase Order objects."""
 
-    class Meta:
-        model = PurchaseOrder
-        fields = "__all__"
-        #extra_kwargs = {"po": {"read_only": True}, "branch": {"read_only": True}}
+#     class Meta:
+#         model = PurchaseOrder
+#         fields = "__all__"
+#         #extra_kwargs = {"po": {"read_only": True}, "branch": {"read_only": True}}
 
-    def create(self, validated_data):
-        return PurchaseOrder.objects.create(**validated_data)
+#     def create(self, validated_data):
+#         return PurchaseOrder.objects.create(**validated_data)
 
-    def update(self, instance, validated_data):
-        """
-        Update and return an existing `Purchase order` instance, given the validated data.
-        """
-        instance.po_number = validated_data.get("po_number", instance.po_number)
-        instance.vendor = validated_data.get("vendor", instance.vendor)
-        instance.address = validated_data.get("address", instance.address)
-        instance.shipping_address = validated_data.get(
-            "shipping_address", instance.shipping_address
-        )
-        instance.date = validated_data.get("date", instance.date)
-        instance.comment = validated_data.get("comment", instance.comment)
-        instance.gst_type = validated_data.get("gst_type", instance.gst_type)
+#     def update(self, instance, validated_data):
+#         """
+#         Update and return an existing `Purchase order` instance, given the validated data.
+#         """
+#         instance.po_number = validated_data.get("po_number", instance.po_number)
+#         instance.vendor = validated_data.get("vendor", instance.vendor)
+#         instance.address = validated_data.get("address", instance.address)
+#         instance.shipping_address = validated_data.get(
+#             "shipping_address", instance.shipping_address
+#         )
+#         instance.date = validated_data.get("date", instance.date)
+#         instance.comment = validated_data.get("comment", instance.comment)
+#         instance.gst_type = validated_data.get("gst_type", instance.gst_type)
 
-        instance.save()
-        return instance
+#         instance.save()
+#         return instance
 
 
-class POItemSerializer(serializers.ModelSerializer):
-    """This serializer is used to serialize Purchase order item object."""
+# class POItemSerializer(serializers.ModelSerializer):
+#     """This serializer is used to serialize Purchase order item object."""
 
-    class Meta:
-        model = PurchaseOrderItem
-        fields = "__all__"
-        #extra_kwargs = {"po": {"read_only": True}}
+#     class Meta:
+#         model = PurchaseOrderItem
+#         fields = "__all__"
+#         #extra_kwargs = {"po": {"read_only": True}}
 
-    def create(self, validated_data):
-        return PurchaseOrderItem.objects.create(**validated_data)
+#     def create(self, validated_data):
+#         return PurchaseOrderItem.objects.create(**validated_data)
 
-    def update(self, instance, validated_data):
-        """
-        Update and return an existing `Purchase order item` instance, given the validated data.
-        """
-        instance.product = validated_data.get("product", instance.product)
-        instance.price = validated_data.get("price", instance.price)
-        instance.quantity = validated_data.get("quantity", instance.quantity)
+#     def update(self, instance, validated_data):
+#         """
+#         Update and return an existing `Purchase order item` instance, given the validated data.
+#         """
+#         instance.product = validated_data.get("product", instance.product)
+#         instance.price = validated_data.get("price", instance.price)
+#         instance.quantity = validated_data.get("quantity", instance.quantity)
 
-        instance.save()
-        return instance
+#         instance.save()
+#         return instance
 
 
 # ----Purchase Serializers
@@ -225,9 +223,11 @@ class POItemSerializer(serializers.ModelSerializer):
 class PurchaseSerializer(serializers.ModelSerializer):
     """This serializer is used to serialize Purchase objects."""
 
+    vendor_name = ReadOnlyField(source="vendor.name")
     class Meta:
         model = Purchase
         fields = "__all__"
+        
 
     def create(self, validated_data):
         return Purchase.objects.create(**validated_data)
@@ -236,11 +236,23 @@ class PurchaseSerializer(serializers.ModelSerializer):
         """
         Update and return an existing `Purchase` instance, given the validated data.
         """
+        instance.vendor = validated_data.get("vendor", instance.vendor)
+        instance.address = validated_data.get("address", instance.address)
+        instance.shipping_address = validated_data.get(
+            "shipping_address", instance.shipping_address
+        )
         instance.date = validated_data.get("date", instance.date)
+        instance.comment = validated_data.get("comment", instance.comment)
+        instance.gst_type = validated_data.get("gst_type", instance.gst_type)
         instance.invoice_no = validated_data.get("invoice_no", instance.invoice_no)
 
         instance.save()
         return instance
+    
+    def to_representation(self, instance):
+        representation = super(PurchaseSerializer, self).to_representation(instance)
+        representation['date'] = instance.date.strftime("%b/%d/%Y, %H:%M:%S")
+        return representation
 
 
 class PurchaseItemSerializer(serializers.ModelSerializer):
