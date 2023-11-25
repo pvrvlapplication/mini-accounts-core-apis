@@ -251,13 +251,14 @@ class PurchaseSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super(PurchaseSerializer, self).to_representation(instance)
-        representation['date'] = instance.date.strftime("%b/%d/%Y, %H:%M:%S")
+        representation['date'] = instance.date.strftime("%b/%d/%Y, %H:%M")
         return representation
 
 
 class PurchaseItemSerializer(serializers.ModelSerializer):
     """This serializer is used to serialize Purchase item object."""
 
+    product_name = ReadOnlyField(source="product.name")
     class Meta:
         model = PurchaseItem
         fields = "__all__"

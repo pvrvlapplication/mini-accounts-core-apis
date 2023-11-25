@@ -273,11 +273,11 @@ class PurchaseView(APIView):
                 item_data.append(purchase_item_serializer.data)
             purchase_data.update({"purchase_items": item_data})
             purchase_data.update(
-                {"taxble_value": purchase_items.aggregate(Sum("taxble_value"))['taxble_value__sum'],
-                 "invoice_value": purchase_items.aggregate(Sum("invoice_value"))['invoice_value__sum']}
+                {"taxble_value": float(purchase_items.aggregate(Sum("taxble_value"))['taxble_value__sum']),
+                 "invoice_value": float(purchase_items.aggregate(Sum("invoice_value"))['invoice_value__sum'])}
             )
             data.append(purchase_data)
-        return Response(data)
+        return Response(data[0] if id else data)
 
     @transaction.atomic
     def post(self, request, format=None):
@@ -314,19 +314,21 @@ class PurchaseView(APIView):
     @transaction.atomic
     def put(self, request, id):
         try:
-            pur_obj = Purchase.objects.get(id=id, po__vendor__user_id=request.user.id)
+            pur_obj = Purchase.objects.get(id=id, vendor__user_id=request.user.id)
             with transaction.atomic():
                 purchase_serializer = PurchaseSerializer(pur_obj, data=request.data.get("purchase_data"))
                 if purchase_serializer.is_valid():
                     purchase_serializer.save()
                     for data in request.data.get("purchase_item_data"):
                         data.update({"purchase": purchase_serializer.data.get("id")})
-                        purchase_item_obj = PurchaseItem.objects.get(id=data.get("id"))
-                        purchase_item_serializer = PurchaseItemSerializer(purchase_item_obj, data=data)
+                        if data.get('id'):
+                            purchase_item_obj = PurchaseItem.objects.get(id=data.get("id"))
+                            purchase_item_serializer = PurchaseItemSerializer(purchase_item_obj, data=data)
+                        else:
+                            purchase_item_serializer = PurchaseItemSerializer(data=data)
                         if purchase_item_serializer.is_valid():
                             purchase_item_serializer.save()
                         else:
-                            print(purchase_item_serializer.errors)
                             transaction.rollback()
                             return Response(
                                 purchase_item_serializer.errors,
