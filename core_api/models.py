@@ -7,6 +7,7 @@ from django.db.models import Sum
 GST_REGEX = "\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}"
 MOBILE_REGEX = "\+?\d[\d -]{8,12}\d"
 PAN_REGEX = "[A-Z]{5}\d{4}[A-Z]{1}"
+GST_CHOICES = (("I", "INTER"), ("O", "OUTER"), ("NO", "NOGST"))
 
 
 class Company(models.Model):
@@ -124,6 +125,8 @@ class Party(models.Model):
 class Address(models.Model):
     """This model is used to store address(es) of the customers and vendors"""
 
+    ADDRESS_OPTIONS = (("HM", "HOME"), ("BU", "BUSINESS"), ("BI", "BILLING"), ("SH", "SHIPPING"))
+
     dno = models.CharField(max_length=30)  # Door number, Building name
     area = models.CharField(max_length=30)  # Village name
     city = models.CharField(max_length=30)  # City name
@@ -146,6 +149,7 @@ class Address(models.Model):
         null=True, blank=True
     )  # To mark it as shipping address
     party = models.ForeignKey(Party, on_delete=models.CASCADE)  # Address of Patry
+    address_type = models.CharField(choices=ADDRESS_OPTIONS, max_length=3) # Type of Address
 
     def __str__(self):
         return self.party.name
@@ -154,87 +158,8 @@ class Address(models.Model):
 # -------Purchase Models
 
 
-# class PurchaseOrder(models.Model):
-#     """This model is used to store Purchase order related information"""
-
-#     GST_CHOICES = (("I", "INTER"), ("O", "OUTER"), ("NO", "NOGST"))
-#     po_number = models.CharField(max_length=50)
-#     vendor = models.ForeignKey(Party, on_delete=models.CASCADE)
-#     address = models.ForeignKey(
-#         Address, on_delete=models.CASCADE, related_name="po_address"
-#     )
-#     shipping_address = models.ForeignKey(
-#         Address, on_delete=models.CASCADE, related_name="po_shipping"
-#     )
-#     date = models.DateTimeField(auto_now_add=True)
-#     branch = models.ForeignKey(Branch, models.CASCADE, null=True, blank=True)
-#     comment = models.TextField()
-#     gst_type = models.CharField(choices=GST_CHOICES, max_length=10)
-
-#     def __str__(self):
-#         return str(self.po_number)
-    
-#     def taxble_value(self):
-#         return PurchaseOrderItem.objects.filter(po__id=self.id).aggregate(Sum('taxble_value'))
-    
-#     def invoice_value(self):
-#         return PurchaseOrderItem.objects.filter(po__id=self.id).aggregate(Sum('invoice_value'))
-
-
-# class PurchaseOrderItem(models.Model):
-#     """This model is used to store purchase order items (products info of a po)"""
-
-#     po = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-#     price = models.DecimalField(max_digits=8, decimal_places=2)
-#     quantity = models.DecimalField(max_digits=10, decimal_places=2)
-#     sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     cgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     igst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     taxble_value = models.DecimalField(
-#         max_digits=15, decimal_places=2, null=True, blank=True
-#     )
-#     invoice_value = models.DecimalField(
-#         max_digits=20, decimal_places=2, null=True, blank=True
-#     )
-
-#     def __str__(self):
-#         return str(self.po.po_number)
-
-#     def save(self, *args, **kwargs):
-#         self.taxble_value = self.price * self.quantity
-#         if self.po.gst_type == "I":
-#             self.sgst = (
-#                 ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
-#                 if self.product.gst_slab != 0
-#                 else 0
-#             )
-#             self.cgst = (
-#                 ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
-#                 if self.product.gst_slab != 0
-#                 else 0
-#             )
-#             self.igst = 0
-#         elif self.po.gst_type == "E":
-#             self.sgst = 0
-#             self.cgst = 0
-#             self.igst = (
-#                 (float(self.taxble_value) * float(self.product.gst_slab)) / (100)
-#                 if self.product.gst_slab != 0
-#                 else 0
-#             )
-#         elif self.po.gst_type == "NO":
-#             self.sgst = 0
-#             self.cgst = 0
-#             self.igst = 0
-#         self.invoice_value = (
-#             float(self.taxble_value) + self.sgst + self.cgst + self.igst
-#         )
-#         super(PurchaseOrderItem, self).save(*args, **kwargs)
-
-
 class Purchase(models.Model):
-    GST_CHOICES = (("I", "INTER"), ("O", "OUTER"), ("NO", "NOGST"))
+    
     vendor = models.ForeignKey(Party, on_delete=models.CASCADE)
     address = models.ForeignKey(
         Address, on_delete=models.CASCADE, related_name="po_address"
@@ -310,12 +235,10 @@ class PurchaseItem(models.Model):
 # -------Sale Models
 
 
-class SaleOrder(models.Model):
-    """This model is used to store Sale order related information"""
+class Sale(models.Model):
+    """To store sales objects"""
 
-    GST_CHOICES = (("I", "INTER"), ("O", "OUTER"), ("NO", "NOGST"))
-    so_number = models.CharField(max_length=50)
-    vendor = models.ForeignKey(Party, on_delete=models.CASCADE)
+    party = models.ForeignKey(Party, on_delete=models.CASCADE)
     address = models.ForeignKey(
         Address, on_delete=models.CASCADE, related_name="so_address"
     )
@@ -323,88 +246,23 @@ class SaleOrder(models.Model):
         Address, on_delete=models.CASCADE, related_name="so_shipping"
     )
     date = models.DateTimeField(auto_now_add=True)
-    branch = models.ForeignKey(Branch, models.CASCADE)
     comment = models.TextField()
     gst_type = models.CharField(choices=GST_CHOICES, max_length=10)
-
-    def __str__(self):
-        return self.so_number
-    
-    def taxble_value(self):
-        return SaleOrderItem.objects.filter(so__id=self.id).aggregate(Sum('taxble_value'))
-    
-    def invoice_value(self):
-        return SaleOrderItem.objects.filter(so__id=self.id).aggregate(Sum('invoice_value'))
-
-
-class SaleOrderItem(models.Model):
-    """This model is used to store sale order items (products info of a po)"""
-
-    so = models.ForeignKey(SaleOrder, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=8, decimal_places=2)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    cgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    igst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    taxble_value = models.DecimalField(
-        max_digits=15, decimal_places=2, null=True, blank=True
-    )
-    invoice_value = models.DecimalField(
-        max_digits=20, decimal_places=2, null=True, blank=True
-    )
-
-    def __str__(self):
-        return self.so.so_number
-
-    def save(self, *args, **kwargs):
-        self.taxble_value = self.price * self.quantity
-        if self.so.gst_type == "I":
-            self.sgst = (
-                ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
-                if self.product.gst_slab != 0
-                else 0
-            )
-            self.cgst = (
-                ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
-                if self.product.gst_slab != 0
-                else 0
-            )
-            self.igst = 0
-        elif self.so.gst_type == "E":
-            self.sgst = 0
-            self.cgst = 0
-            self.igst = (
-                (float(self.taxble_value) * float(self.product.gst_slab)) / (100)
-                if self.product.gst_slab != 0
-                else 0
-            )
-        elif self.so.gst_type == "NO":
-            self.sgst = 0
-            self.cgst = 0
-            self.igst = 0
-        self.invoice_value = (
-            float(self.taxble_value) + self.sgst + self.cgst + self.igst
-        )
-        super(SaleOrderItem, self).save(*args, **kwargs)
-
-
-class Sale(models.Model):
-    so = models.ForeignKey(SaleOrder, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
     invoice_no = models.CharField(max_length=35)
 
     def __str__(self):
         return self.invoice_no
 
     def taxble_value(self):
-        return PurchaseItem.objects.filter(sale__id=self.id).aggregate(Sum('taxble_value'))
+        return SaleItem.objects.filter(sale__id=self.id).aggregate(Sum('taxble_value'))
     
     def invoice_value(self):
-        return PurchaseItem.objects.filter(sale__id=self.id).aggregate(Sum('invoice_value'))
+        return SaleItem.objects.filter(sale__id=self.id).aggregate(Sum('invoice_value'))
 
 
 class SaleItem(models.Model):
+    """To store sale objects product items"""
+
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=8, decimal_places=2)
@@ -420,11 +278,11 @@ class SaleItem(models.Model):
     )
 
     def __str__(self):
-        return self.sale.so.so_number
+        return self.sale.invoice_no
 
     def save(self, *args, **kwargs):
         self.taxble_value = self.price * self.quantity
-        if self.sale.so.gst_type == "I":
+        if self.sale.gst_type == "I":
             self.sgst = (
                 ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
                 if self.product.gst_slab != 0
@@ -436,7 +294,7 @@ class SaleItem(models.Model):
                 else 0
             )
             self.igst = 0
-        elif self.sale.so.gst_type == "E":
+        elif self.sale.gst_type == "E":
             self.sgst = 0
             self.cgst = 0
             self.igst = (
@@ -444,7 +302,7 @@ class SaleItem(models.Model):
                 if self.product.gst_slab != 0
                 else 0
             )
-        elif self.sale.so.gst_type == "NO":
+        elif self.sale.gst_type == "NO":
             self.sgst = 0
             self.cgst = 0
             self.igst = 0

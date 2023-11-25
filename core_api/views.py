@@ -10,6 +10,8 @@ from .models import (
     Product,
     Purchase,
     PurchaseItem,
+    Sale,
+    SaleItem,
     User,
 )
 from .serializers import (
@@ -20,6 +22,8 @@ from .serializers import (
     ProductSerializer,
     PurchaseItemSerializer,
     PurchaseSerializer,
+    SaleItemSerializer,
+    SaleSerializer,
     UserSerializer,
 )
 from rest_framework import viewsets
@@ -130,120 +134,6 @@ class AddressViewSet(viewsets.ModelViewSet):
     queryset = Address.objects.all()
 
 
-# -----Purchase Order Viewset
-
-
-# class POView(APIView):
-    """
-    List all PO's, or create a new PO, Update PO and Delete PO.
-    """
-
-    # def get(self, request, format=None, id=""):
-    #     if id:
-    #         purchase_orders = PurchaseOrder.objects.filter(
-    #             pk=id, vendor__user_id=request.user.id
-    #         )
-    #         if not purchase_orders:
-    #             return Response([], status=status.HTTP_200_OK)
-    #     else:
-    #         purchase_orders = PurchaseOrder.objects.filter(
-    #             vendor__user_id=request.user.id
-    #         )
-    #     data = []
-    #     for po in purchase_orders:
-    #         po_serializer = POSerializer(po)
-    #         po_data = po_serializer.data
-    #         purchase_order_items = PurchaseOrderItem.objects.filter(po__id=po.id)
-    #         item_data = []
-    #         for item in purchase_order_items:
-    #             po_item_serializer = POItemSerializer(item)
-    #             item_data.append(po_item_serializer.data)
-    #         po_data.update({"po_items": item_data})
-    #         po_data.update(
-    #             {"taxble_value": purchase_order_items.aggregate(Sum("taxble_value"))}
-    #         )
-    #         po_data.update(
-    #             {"invoice_value": purchase_order_items.aggregate(Sum("invoice_value"))}
-    #         )
-    #         data.append(po_data)
-    #     return Response(data, status=status.HTTP_200_OK)
-
-    # @transaction.atomic
-    # def post(self, request, format=None):
-    #     try:
-    #         with transaction.atomic():
-    #             print(request.data.get("poi_data"))
-    #             po_serializer = POSerializer(data=request.data.get("po_data"))
-    #             if po_serializer.is_valid():
-    #                 po_serializer.save()
-    #                 for data in request.data.get("poi_data"):
-    #                     data.update({"po": po_serializer.data.get("id")})
-    #                     po_item_serializer = POItemSerializer(data=data)
-    #                     if po_item_serializer.is_valid():
-    #                         po_item_serializer.save()
-    #                     else:
-    #                         transaction.rollback()
-    #                         return Response(
-    #                             po_item_serializer.errors,
-    #                             status=status.HTTP_400_BAD_REQUEST,
-    #                         )
-    #                 return Response(po_serializer.data, status=status.HTTP_201_CREATED)
-    #             return Response(
-    #                 po_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #     except DatabaseError:
-    #         return Response(
-    #             po_serializer.errors,
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #         )
-
-    # @transaction.atomic
-    # def put(self, request, id):
-    #     try:
-    #         po_obj = PurchaseOrder.objects.get(id=id, vendor__user_id=request.user.id)
-    #         with transaction.atomic():
-    #             po_serializer = POSerializer(po_obj, data=request.data.get("po_data"))
-    #             if po_serializer.is_valid():
-    #                 po_serializer.save()
-    #                 for data in request.data.get("poi_data"):
-    #                     data.update({"po": po_serializer.data.get("id")})
-    #                     po_item_obj = PurchaseOrderItem.objects.get(id=data.get("id"))
-    #                     po_item_serializer = POItemSerializer(po_item_obj, data=data)
-    #                     if po_item_serializer.is_valid():
-    #                         po_item_serializer.save()
-    #                     else:
-    #                         transaction.rollback()
-    #                         return Response(
-    #                             po_item_serializer.errors,
-    #                             status=status.HTTP_400_BAD_REQUEST,
-    #                         )
-    #                 return Response(po_serializer.data, status=status.HTTP_201_CREATED)
-    #             return Response(
-    #                 po_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #     except DatabaseError:
-    #         return Response(
-    #             po_serializer.errors,
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #         )
-
-    # def delete(self, request, id):
-    #     po_obj = get_object_or_404(
-    #         PurchaseOrder, pk=id, vendor__user_id=request.user.id
-    #     )
-    #     if po_obj:
-    #         po_obj.delete()
-    #         return Response(
-    #             {"status": "success", "data": f"Deleted Successfully."},
-    #             status=status.HTTP_200_OK,
-    #         )
-    #     else:
-    #         return Response(
-    #             {"status": "error", "data": f"{id} Not Found."},
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #         )
-
-
 # -----Purchase Viewset
 
 
@@ -351,6 +241,165 @@ class PurchaseView(APIView):
         )
         if pur_obj:
             pur_obj.delete()
+            return Response(
+                {"status": "success", "data": f"Deleted Successfully."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {"status": "error", "data": f"{id} Not Found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+
+class PurchaseItemView(APIView):
+    """TO perform actions on Purchase Item Date."""
+
+    def delete(self, request, id):
+        pur_item_obj = get_object_or_404(
+            PurchaseItem, pk=id, purchase__vendor__user_id=request.user.id
+        )
+        if pur_item_obj:
+            pur_item_obj.delete()
+            return Response(
+                {"status": "success", "data": f"Deleted Successfully."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {"status": "error", "data": f"{id} Not Found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+# -----Sale Viewset
+
+
+class SaleView(APIView):
+    """
+    List all Sale's, or create a new Sale.
+    """
+
+    def get(self, request, format=None, id=""):
+        if id:
+            sales = Sale.objects.filter(
+                vendor__user_id=request.user.id, pk=id
+            )
+            if not sales:
+                return Response([], status=status.HTTP_200_OK)
+        else:
+            sales = Sale.objects.all()#filter(vendor__user_id=request.user.id)
+
+        data = []
+        for sale in sales:
+            sale_serializer = SaleSerializer(sale)
+            sale_data = sale_serializer.data
+            sale_items = PurchaseItem.objects.filter(purchase__id=sale.id)
+            item_data = []
+            for item in sale_items:
+                sale_item_serializer = PurchaseItemSerializer(item)
+                item_data.append(sale_item_serializer.data)
+            sale_data.update({"purchase_items": item_data})
+            sale_data.update(
+                {"taxble_value": float(sale_items.aggregate(Sum("taxble_value"))['taxble_value__sum']),
+                 "invoice_value": float(sale_items.aggregate(Sum("invoice_value"))['invoice_value__sum'])}
+            )
+            data.append(sale_data)
+        return Response(data[0] if id else data)
+
+    @transaction.atomic
+    def post(self, request, format=None):
+        try:
+            with transaction.atomic():
+                sale_serializer = SaleSerializer(
+                    data=request.data.get("sale_data")
+                )
+                print(sale_serializer.is_valid())
+                if sale_serializer.is_valid():
+                    sale_serializer.save()
+                    for data in request.data.get("sale_item_data"):
+                        data.update({"sale": sale_serializer.data.get("id")})
+                        sale_item_serializer = SaleItemSerializer(data=data)
+                        if sale_item_serializer.is_valid():
+                            sale_item_serializer.save()
+                        else:
+                            transaction.rollback()
+                            return Response(
+                                sale_item_serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                    return Response(
+                        sale_serializer.data, status=status.HTTP_201_CREATED
+                    )
+                return Response(
+                    sale_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+        except DatabaseError:
+            return Response(
+                sale_serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @transaction.atomic
+    def put(self, request, id):
+        try:
+            sale_obj = Sale.objects.get(id=id, vendor__user_id=request.user.id)
+            with transaction.atomic():
+                sale_serializer = SaleSerializer(sale_obj, data=request.data.get("sale_data"))
+                if sale_serializer.is_valid():
+                    sale_serializer.save()
+                    for data in request.data.get("sale_item_data"):
+                        data.update({"sale": sale_serializer.data.get("id")})
+                        if data.get('id'):
+                            sale_item_obj = SaleItem.objects.get(id=data.get("id"))
+                            sale_item_serializer = SaleItemSerializer(sale_item_obj, data=data)
+                        else:
+                            sale_item_serializer = SaleItemSerializer(data=data)
+                        if sale_item_serializer.is_valid():
+                            sale_item_serializer.save()
+                        else:
+                            transaction.rollback()
+                            return Response(
+                                sale_item_serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                    return Response(sale_item_serializer.data, status=status.HTTP_201_CREATED)
+                return Response(
+                    sale_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+        except DatabaseError:
+            return Response(
+                sale_serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+    def delete(self, request, id):
+        sale_obj = get_object_or_404(
+            Sale, pk=id, vendor__user_id=request.user.id
+        )
+        if sale_obj:
+            sale_obj.delete()
+            return Response(
+                {"status": "success", "data": f"Deleted Successfully."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {"status": "error", "data": f"{id} Not Found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+
+class SaleItemView(APIView):
+
+    """TO perform actions on Sale Item Date."""
+
+    def delete(self, request, id):
+        sale_item_obj = get_object_or_404(
+            SaleItem, pk=id, sale__vendor__user_id=request.user.id
+        )
+        if sale_item_obj:
+            sale_item_obj.delete()
             return Response(
                 {"status": "success", "data": f"Deleted Successfully."},
                 status=status.HTTP_200_OK,

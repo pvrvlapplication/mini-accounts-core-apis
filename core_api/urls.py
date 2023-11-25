@@ -6,7 +6,7 @@
 #     path('company/<int:id>/', CompanyView.as_view())
 # ]
 
-from .views import AddressViewSet, CompanyViewSet, BranchViewSet, PartyViewSet, ProductViewSet, PurchaseView, UserViewSet
+from .views import AddressViewSet, CompanyViewSet, BranchViewSet, PartyViewSet, ProductViewSet, PurchaseView, SaleItemView, SaleView, UserViewSet, PurchaseItemView
 from rest_framework.routers import DefaultRouter
 from django.urls import path
 
@@ -20,7 +20,9 @@ router.register(r"product", ProductViewSet, basename="product")
 router.register(r"party", PartyViewSet, basename="party")
 router.register(r"partyAddress", AddressViewSet, basename="partyAddress")
 urlpatterns = router.urls
-# urlpatterns.append(path('purchaseOrder/', POView.as_view(), name="purchaseOrder"),)
-# urlpatterns.append(path('purchaseOrder/<int:id>/', POView.as_view(), name="purchaseOrder"),)
 urlpatterns.append(path('purchase/', PurchaseView.as_view(), name="purchase"),)
 urlpatterns.append(path('purchase/<int:id>/', PurchaseView.as_view(), name="purchase"),)
+urlpatterns.append(path('purchaseItem/<int:id>/', PurchaseItemView.as_view(), name="purchaseItem"),)
+urlpatterns.append(path('sale/', SaleView.as_view(), name="sale"),)
+urlpatterns.append(path('sale/<int:id>/', SaleView.as_view(), name="sale"),)
+urlpatterns.append(path('saleItem/<int:id>/', SaleItemView.as_view(), name="saleItem"),)
