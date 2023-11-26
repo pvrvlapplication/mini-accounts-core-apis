@@ -1,3 +1,4 @@
+from typing import Any
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
@@ -8,6 +9,7 @@ GST_REGEX = "\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}"
 MOBILE_REGEX = "\+?\d[\d -]{8,12}\d"
 PAN_REGEX = "[A-Z]{5}\d{4}[A-Z]{1}"
 GST_CHOICES = (("I", "INTER"), ("O", "OUTER"), ("NO", "NOGST"))
+TRANSACTION_TYPE_CHOICES = (("BK", "BANK"), ("CQ", "CHEQUE"), ("CA", "CASH"), ("UPI", "UPI"))
 
 
 class Company(models.Model):
@@ -310,3 +312,62 @@ class SaleItem(models.Model):
             float(self.taxble_value) + self.sgst + self.cgst + self.igst
         )
         super(SaleItem, self).save(*args, **kwargs)
+
+# -------Bank Models
+
+class Bank(models.Model):
+    """This model is used to store bank details."""
+    name = models.CharField(max_length=50)
+    account_no = models.CharField(max_length=25)
+    ifsc = models.CharField(max_length=11)
+    branch = models.CharField(max_length=25)
+    address = models.CharField(max_length=50)
+
+    def __str__(self):
+        self.name
+
+class PartyBank(models.Model):
+    """This model is used to store bank details."""
+    name = models.CharField(max_length=50)
+    account_no = models.CharField(max_length=25)
+    ifsc = models.CharField(max_length=11)
+    branch = models.CharField(max_length=25)
+    address = models.CharField(max_length=50)
+
+    def __str__(self):
+        self.name
+
+# -------Receipt Models
+
+class Receipt(models.Model):
+
+    """This model is used to store receipt details."""
+
+    party = models.ForeignKey(Party, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    bank = models.ForeignKey(Bank, on_delete=models.CASCADE, blank=True, null=True)
+    cheque_no = models.CharField(max_length=20, blank=True, null=True)
+    tran_type = models.CharField(choices=TRANSACTION_TYPE_CHOICES, max_length=3)
+    description = models.TextField(null=True, blank=True)
+    date = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return self.id
+
+# -------Payment Models
+
+class Payment(models.Model):
+
+    """This model is used to store payment details."""
+
+    party = models.ForeignKey(Party, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    our_bank = models.ForeignKey(Bank, on_delete=models.CASCADE, blank=True, null=True, related_name="our_bank")
+    party_bank = models.ForeignKey(Bank, on_delete=models.CASCADE, blank=True, null=True, related_name="party_bank")
+    cheque_no = models.CharField(max_length=20, blank=True, null=True)
+    tran_type = models.CharField(choices=TRANSACTION_TYPE_CHOICES, max_length=3)
+    description = models.TextField(null=True, blank=True)
+    date = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return self.id

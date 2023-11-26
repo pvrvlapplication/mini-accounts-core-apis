@@ -1,10 +1,14 @@
 from rest_framework import serializers
 from .models import (
     Address,
+    Bank,
     Branch,
     Party,
+    PartyBank,
+    Payment,
     Purchase,
     PurchaseItem,
+    Receipt,
     Sale,
     SaleItem,
     User,
@@ -281,3 +285,105 @@ class SaleItemSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+# Bank Serializers
+
+class BankSerializer(serializers.ModelSerializer):
+    """This serializer is used to serialize bank object."""
+
+    class Meta:
+        model = Bank
+        fields = "__all__"
+
+    def create(self, validated_data):
+        return Bank.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Bank` instance, given the validated data.
+        """
+        instance.name = validated_data.get("name", instance.name)
+        instance.account_no = validated_data.get("account_no", instance.account_no)
+        instance.ifsc = validated_data.get("ifsc", instance.ifsc)
+        instance.branch = validated_data.get("branch", instance.branch)
+        instance.address = validated_data.get("address", instance.address)
+
+        instance.save()
+        return instance
+    
+class PartyBankSerializer(serializers.ModelSerializer):
+    """This serializer is used to serialize party bank object."""
+
+    class Meta:
+        model = PartyBank
+        fields = "__all__"
+
+    def create(self, validated_data):
+        return PartyBank.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `PartyBank` instance, given the validated data.
+        """
+        instance.name = validated_data.get("name", instance.name)
+        instance.account_no = validated_data.get("account_no", instance.account_no)
+        instance.ifsc = validated_data.get("ifsc", instance.ifsc)
+        instance.branch = validated_data.get("branch", instance.branch)
+        instance.address = validated_data.get("address", instance.address)
+
+        instance.save()
+        return instance
+
+# Receipt serializer
+
+
+class ReceiptSerializer(serializers.ModelSerializer):
+    """This serializer is used to serialize receipt object."""
+
+    class Meta:
+        model = Receipt
+        fields = "__all__"
+
+    def create(self, validated_data):
+        return Receipt.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Receipt` instance, given the validated data.
+        """
+        instance.party = validated_data.get("party", instance.party)
+        instance.amount = validated_data.get("amount", instance.amount)
+        instance.bank = validated_data.get("bank", instance.bank)
+        instance.cheque_no = validated_data.get("cheque_no", instance.cheque_no)
+        instance.tran_type = validated_data.get("tran_type", instance.tran_type)
+        instance.description = validated_data.get("description", instance.description)
+        instance.date = validated_data.get("date", instance.date)
+
+        instance.save()
+        return instance
+    
+class PaymentSerializer(serializers.ModelSerializer):
+    """This serializer is used to serialize payment object."""
+
+    class Meta:
+        model = Payment
+        fields = "__all__"
+
+    def create(self, validated_data):
+        return Payment.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Payment` instance, given the validated data.
+        """
+        instance.party = validated_data.get("party", instance.party)
+        instance.amount = validated_data.get("amount", instance.amount)
+        instance.bank = validated_data.get("bank", instance.bank)
+        instance.cheque_no = validated_data.get("cheque_no", instance.cheque_no)
+        instance.tran_type = validated_data.get("tran_type", instance.tran_type)
+        instance.description = validated_data.get("description", instance.description)
+        instance.date = validated_data.get("date", instance.date)
+
+        instance.save()
+        return instance
+    

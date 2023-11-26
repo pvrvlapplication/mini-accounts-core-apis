@@ -4,24 +4,32 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from .models import (
     Address,
+    Bank,
     Branch,
     Company,
     Party,
+    PartyBank,
+    Payment,
     Product,
     Purchase,
     PurchaseItem,
+    Receipt,
     Sale,
     SaleItem,
     User,
 )
 from .serializers import (
     AddressSerializer,
+    BankSerializer,
     BranchSerializer,
     CompanySerializer,
+    PartyBankSerializer,
     PartySerializer,
+    PaymentSerializer,
     ProductSerializer,
     PurchaseItemSerializer,
     PurchaseSerializer,
+    ReceiptSerializer,
     SaleItemSerializer,
     SaleSerializer,
     UserSerializer,
@@ -282,7 +290,7 @@ class SaleView(APIView):
     def get(self, request, format=None, id=""):
         if id:
             sales = Sale.objects.filter(
-                vendor__user_id=request.user.id, pk=id
+                party__user_id=request.user.id, pk=id
             )
             if not sales:
                 return Response([], status=status.HTTP_200_OK)
@@ -293,12 +301,12 @@ class SaleView(APIView):
         for sale in sales:
             sale_serializer = SaleSerializer(sale)
             sale_data = sale_serializer.data
-            sale_items = PurchaseItem.objects.filter(purchase__id=sale.id)
+            sale_items = SaleItem.objects.filter(sale__id=sale.id)
             item_data = []
             for item in sale_items:
-                sale_item_serializer = PurchaseItemSerializer(item)
+                sale_item_serializer = SaleItemSerializer(item)
                 item_data.append(sale_item_serializer.data)
-            sale_data.update({"purchase_items": item_data})
+            sale_data.update({"sale_items": item_data})
             sale_data.update(
                 {"taxble_value": float(sale_items.aggregate(Sum("taxble_value"))['taxble_value__sum']),
                  "invoice_value": float(sale_items.aggregate(Sum("invoice_value"))['invoice_value__sum'])}
@@ -342,7 +350,7 @@ class SaleView(APIView):
     @transaction.atomic
     def put(self, request, id):
         try:
-            sale_obj = Sale.objects.get(id=id, vendor__user_id=request.user.id)
+            sale_obj = Sale.objects.get(id=id, party__user_id=request.user.id)
             with transaction.atomic():
                 sale_serializer = SaleSerializer(sale_obj, data=request.data.get("sale_data"))
                 if sale_serializer.is_valid():
@@ -375,7 +383,7 @@ class SaleView(APIView):
 
     def delete(self, request, id):
         sale_obj = get_object_or_404(
-            Sale, pk=id, vendor__user_id=request.user.id
+            Sale, pk=id, party__user_id=request.user.id
         )
         if sale_obj:
             sale_obj.delete()
@@ -392,11 +400,11 @@ class SaleView(APIView):
 
 class SaleItemView(APIView):
 
-    """TO perform actions on Sale Item Date."""
+    """TO perform actions on Sale Item Delete."""
 
     def delete(self, request, id):
         sale_item_obj = get_object_or_404(
-            SaleItem, pk=id, sale__vendor__user_id=request.user.id
+            SaleItem, pk=id, sale__party__user_id=request.user.id
         )
         if sale_item_obj:
             sale_item_obj.delete()
@@ -409,3 +417,41 @@ class SaleItemView(APIView):
                 {"status": "error", "data": f"{id} Not Found."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        
+# -----Bank Viewset
+class BankViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for bank instances.
+    """
+
+    serializer_class = BankSerializer
+    queryset = Bank.objects.all()
+
+# -----PartyBank Viewset
+class PartyBankViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for party bank instances.
+    """
+
+    serializer_class = PartyBankSerializer
+    queryset = PartyBank.objects.all()
+
+# -----Receipt Viewset
+class ReceiptViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for party receipt instances.
+    """
+
+    serializer_class = ReceiptSerializer
+    queryset = Receipt.objects.all()
+
+# -----Payment Viewset
+class PaymentViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for party payment instances.
+    """
+
+    serializer_class = PaymentSerializer
+    queryset = Payment.objects.all()
+
+
