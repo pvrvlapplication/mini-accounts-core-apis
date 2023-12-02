@@ -324,7 +324,7 @@ class Bank(models.Model):
     address = models.CharField(max_length=50)
 
     def __str__(self):
-        self.name
+        return self.name
 
 class PartyBank(models.Model):
     """This model is used to store bank details."""
@@ -335,7 +335,7 @@ class PartyBank(models.Model):
     address = models.CharField(max_length=50)
 
     def __str__(self):
-        self.name
+        return self.name
 
 # -------Receipt Models
 
@@ -351,8 +351,8 @@ class Receipt(models.Model):
     description = models.TextField(null=True, blank=True)
     date = models.DateTimeField(auto_now=True)
 
-    def __str__(self) -> str:
-        return self.id
+    def __str__(self):
+        return str(self.id)
 
 # -------Payment Models
 
@@ -363,11 +363,11 @@ class Payment(models.Model):
     party = models.ForeignKey(Party, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     our_bank = models.ForeignKey(Bank, on_delete=models.CASCADE, blank=True, null=True, related_name="our_bank")
-    party_bank = models.ForeignKey(Bank, on_delete=models.CASCADE, blank=True, null=True, related_name="party_bank")
+    party_bank = models.ForeignKey(PartyBank, on_delete=models.CASCADE, blank=True, null=True, related_name="party_bank")
     cheque_no = models.CharField(max_length=20, blank=True, null=True)
     tran_type = models.CharField(choices=TRANSACTION_TYPE_CHOICES, max_length=3)
     description = models.TextField(null=True, blank=True)
     date = models.DateTimeField(auto_now=True)
 
-    def __str__(self) -> str:
-        return self.id
+    def __str__(self):
+        return str(self.id)

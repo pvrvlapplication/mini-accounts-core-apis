@@ -340,6 +340,8 @@ class PartyBankSerializer(serializers.ModelSerializer):
 class ReceiptSerializer(serializers.ModelSerializer):
     """This serializer is used to serialize receipt object."""
 
+    party_name = ReadOnlyField(source="party.name")
+    bank_name = ReadOnlyField(source="bank.name")
     class Meta:
         model = Receipt
         fields = "__all__"
@@ -365,6 +367,10 @@ class ReceiptSerializer(serializers.ModelSerializer):
 class PaymentSerializer(serializers.ModelSerializer):
     """This serializer is used to serialize payment object."""
 
+    party_name = ReadOnlyField(source="party.name")
+    our_bank_name = ReadOnlyField(source="our_bank.name")
+    party_bank_name = ReadOnlyField(source="party_bank.name")
+
     class Meta:
         model = Payment
         fields = "__all__"
@@ -378,7 +384,8 @@ class PaymentSerializer(serializers.ModelSerializer):
         """
         instance.party = validated_data.get("party", instance.party)
         instance.amount = validated_data.get("amount", instance.amount)
-        instance.bank = validated_data.get("bank", instance.bank)
+        instance.our_bank = validated_data.get("our_bank", instance.our_bank)
+        instance.party_bank = validated_data.get("party_bank", instance.party_bank)
         instance.cheque_no = validated_data.get("cheque_no", instance.cheque_no)
         instance.tran_type = validated_data.get("tran_type", instance.tran_type)
         instance.description = validated_data.get("description", instance.description)

@@ -88,7 +88,6 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     # queryset = User.objects.all()
     def get_queryset(self):
-        print(self.request.user.id)
         return User.objects.filter(id=self.request.user.id)
 
 
@@ -444,6 +443,7 @@ class ReceiptViewSet(viewsets.ModelViewSet):
 
     serializer_class = ReceiptSerializer
     queryset = Receipt.objects.all()
+    print(queryset)
 
 # -----Payment Viewset
 class PaymentViewSet(viewsets.ModelViewSet):
