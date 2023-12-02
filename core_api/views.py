@@ -86,9 +86,9 @@ class UserViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = UserSerializer
-    # queryset = User.objects.all()
-    def get_queryset(self):
-        return User.objects.filter(id=self.request.user.id)
+    queryset = User.objects.all()
+    # def get_queryset(self):
+    #     return User.objects.filter(id=self.request.user.id)
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
