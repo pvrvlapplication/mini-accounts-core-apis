@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from .models import (
     Address,
     Bank,
-    Branch,
     Company,
     Party,
     PartyBank,
@@ -21,7 +20,6 @@ from .models import (
 from .serializers import (
     AddressSerializer,
     BankSerializer,
-    BranchSerializer,
     CompanySerializer,
     PartyBankSerializer,
     PartySerializer,
@@ -100,13 +98,13 @@ class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
 
 
-class BranchViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for branch instances.
-    """
+# class BranchViewSet(viewsets.ModelViewSet):
+#     """
+#     A viewset for branch instances.
+#     """
 
-    serializer_class = BranchSerializer
-    queryset = Branch.objects.all()
+#     serializer_class = BranchSerializer
+#     queryset = Branch.objects.all()
 
 
 # -----Product Viewset
@@ -320,7 +318,6 @@ class SaleView(APIView):
                 sale_serializer = SaleSerializer(
                     data=request.data.get("sale_data")
                 )
-                print(sale_serializer.is_valid())
                 if sale_serializer.is_valid():
                     sale_serializer.save()
                     for data in request.data.get("sale_item_data"):
@@ -443,7 +440,6 @@ class ReceiptViewSet(viewsets.ModelViewSet):
 
     serializer_class = ReceiptSerializer
     queryset = Receipt.objects.all()
-    print(queryset)
 
 # -----Payment Viewset
 class PaymentViewSet(viewsets.ModelViewSet):

@@ -5,7 +5,7 @@ from .models import *
 
 admin.site.register(Company)
 admin.site.register(User)
-admin.site.register(Branch)
+# admin.site.register(Branch)
 admin.site.register(Product)
 admin.site.register(Party)
 admin.site.register(Address)

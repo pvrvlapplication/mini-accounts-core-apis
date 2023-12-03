@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import (
     Address,
     Bank,
-    Branch,
     Party,
     PartyBank,
     Payment,
@@ -19,18 +18,18 @@ from rest_framework.serializers import ReadOnlyField
 
 
 class UserSerializer(serializers.ModelSerializer):
-    branch_name = ReadOnlyField(source="branch.name")
+    company_name = ReadOnlyField(source="company.name")
 
     class Meta:
         model = User
-        fields = ["username", "email", "password", "branch", "id", "branch_name"]
+        fields = ["username", "email", "password", "company", "id", "company_name"]
         #extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
         user = User(
             username=validated_data["username"],
             email=validated_data["email"],
-            branch=validated_data["branch"],
+            company=validated_data["company"],
         )
         user.set_password(validated_data["password"])
         user.save()
@@ -40,7 +39,7 @@ class UserSerializer(serializers.ModelSerializer):
         """
         Update and return an existing `User` instance, given the validated data.
         """
-        instance.branch = validated_data.get("branch", instance.branch)
+        instance.company = validated_data.get("company", instance.company)
         instance.save()
         return instance
 
@@ -58,23 +57,6 @@ class CompanySerializer(serializers.ModelSerializer):
         Update and return an existing `Company` instance, given the validated data.
         """
         instance.name = validated_data.get("name", instance.name)
-        instance.save()
-        return instance
-
-
-class BranchSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Branch
-        fields = "__all__"
-
-    def create(self, validated_data):
-        return Branch.objects.create(**validated_data)
-
-    def update(self, instance, validated_data):
-        """
-        Update and return an existing `Branch` instance, given the validated data.
-        """
-        instance.name = validated_data.get("name", instance.name)
         instance.dno = validated_data.get("dno", instance.dno)
         instance.area = validated_data.get("area", instance.area)
         instance.city = validated_data.get("city", instance.city)
@@ -87,6 +69,33 @@ class BranchSerializer(serializers.ModelSerializer):
         instance.pan = validated_data.get("pan", instance.pan)
         instance.save()
         return instance
+
+
+# class BranchSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Branch
+#         fields = "__all__"
+
+#     def create(self, validated_data):
+#         return Branch.objects.create(**validated_data)
+
+#     def update(self, instance, validated_data):
+#         """
+#         Update and return an existing `Branch` instance, given the validated data.
+#         """
+#         instance.name = validated_data.get("name", instance.name)
+#         instance.dno = validated_data.get("dno", instance.dno)
+#         instance.area = validated_data.get("area", instance.area)
+#         instance.city = validated_data.get("city", instance.city)
+#         instance.district = validated_data.get("district", instance.district)
+#         instance.state = validated_data.get("state", instance.state)
+#         instance.country = validated_data.get("country", instance.country)
+#         instance.gst = validated_data.get("gst", instance.gst)
+#         instance.mobile = validated_data.get("mobile", instance.mobile)
+#         instance.phone = validated_data.get("phone", instance.phone)
+#         instance.pan = validated_data.get("pan", instance.pan)
+#         instance.save()
+#         return instance
 
 
 # -------Product Serializer
