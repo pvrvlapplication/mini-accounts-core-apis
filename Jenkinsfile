@@ -14,13 +14,14 @@ pipeline {
         stage('Build') { 
             steps { 
                 script{
-                 app = docker.build("pvrvl/pvrvl-mini-accounts-core-apis")
+                    echo 'Build'
+                    app = docker.build("pvrvl/pvrvl-mini-accounts-core-apis")
                 }
             }
         }
         stage('Test'){
             steps {
-                 echo 'Empty'
+                echo 'Empty'
             }
         }
         stage('Push Image') {
