@@ -44,47 +44,12 @@ class Company(models.Model):
     )  # Phone number
     pan = models.CharField(
         max_length=15,
+        unique=True,
         validators=[RegexValidator(PAN_REGEX, message="Enter a Valid PAN Number")],
     )  # Pan number "AAAAA1111A"
 
     def __str__(self):
         return self.name
-
-
-# class Branch(models.Model):
-#     """This models is to store branch details of a company."""
-
-#     company = models.ForeignKey(
-#         Company, on_delete=models.CASCADE, null=True, blank=True
-#     )  # Company
-#     name = models.CharField(max_length=50)  # Branch name
-#     dno = models.CharField(max_length=30)  # Door number, Building name
-#     area = models.CharField(max_length=30)  # Village name
-#     city = models.CharField(max_length=30)  # City name
-#     district = models.CharField(max_length=25)  # District name
-#     state = models.CharField(max_length=20)  # State name
-#     country = models.CharField(max_length=20)  # Country name
-#     gst = models.CharField(
-#         max_length=20,
-#         unique=True,
-#         validators=[
-#             RegexValidator(GST_REGEX, message="Enter a Valid Indian GST Number")
-#         ],
-#     )  # GST number  22AAAAA0000A1Z5
-#     mobile = models.CharField(max_length=15)  # Mobile number
-#     phone = models.CharField(
-#         max_length=15,
-#         validators=[
-#             RegexValidator(MOBILE_REGEX, message="Enter a Valid Indian Phone Number")
-#         ],
-#     )  # Phone number
-#     pan = models.CharField(
-#         max_length=15,
-#         validators=[RegexValidator(PAN_REGEX, message="Enter a Valid PAN Number")],
-#     )  # Pan number "AAAAA1111A"
-
-#     def __str__(self):
-#         return self.name
 
 
 class User(AbstractUser):
@@ -105,12 +70,11 @@ class User(AbstractUser):
         return self.username
 
 
-
 # -------Product Models
 
 
 class Product(models.Model):
-    """This model is used to store information"""
+    """This model is used to store products"""
 
     GST_SLABS = ((0, 0), (5, 5), (12, 12), (18, 18), (28, 28))
     name = models.CharField(max_length=20)  # Name of the product
@@ -118,8 +82,31 @@ class Product(models.Model):
     hsn = models.CharField(max_length=35)  # Hsn code
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # user
 
+    class Meta:
+        unique_together = ('name', 'user',)
+
     def __str__(self):
         return self.name
+
+
+# -------Service Models
+
+
+class Service(models.Model):
+    """This model is used to store services"""
+
+    GST_SLABS = ((0, 0), (5, 5), (12, 12), (18, 18), (28, 28))
+    name = models.CharField(max_length=20)  # Name of the product
+    gst_slab = models.CharField(choices=GST_SLABS, max_length=5)  # GST Slab Percentage.
+    hsn = models.CharField(max_length=35)  # Hsn code
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # user
+
+    class Meta:
+        unique_together = ('name', 'user',)
+
+    def __str__(self):
+        return self.name
+
 
 
 # -------Customer & Vendor Models
@@ -132,7 +119,6 @@ class Party(models.Model):
     name = models.CharField(max_length=50)  # Name of the party
     gst = models.CharField(
         max_length=20,
-        unique=True,
         validators=[
             RegexValidator(GST_REGEX, message="Enter a Valid Indian GST Number")
         ],
@@ -143,6 +129,9 @@ class Party(models.Model):
     )  # Pan number "AAAAA1111A"
     party_type = models.CharField(max_length=10, choices=PARTY_TYPE)  # Type of Party
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # user
+
+    class Meta:
+        unique_together = (('name', 'user',), ('gst', 'user'), ('pan', 'user'))
 
     def __str__(self):
         return self.name
@@ -252,9 +241,7 @@ class PurchaseItem(models.Model):
             self.sgst = 0
             self.cgst = 0
             self.igst = 0
-        self.invoice_value = (
-            float(self.taxble_value) + self.sgst + self.cgst + self.igst
-        )
+        self.invoice_value = float(self.taxble_value)
         super(PurchaseItem, self).save(*args, **kwargs)
 
 
@@ -344,6 +331,10 @@ class Bank(models.Model):
     ifsc = models.CharField(max_length=11)
     branch = models.CharField(max_length=25)
     address = models.CharField(max_length=50)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('name', 'account_no', 'user'), ('account_no', 'user'))
 
     def __str__(self):
         return self.name
@@ -355,6 +346,10 @@ class PartyBank(models.Model):
     ifsc = models.CharField(max_length=11)
     branch = models.CharField(max_length=25)
     address = models.CharField(max_length=50)
+    party = models.ForeignKey(Party, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('name', 'account_no', 'party'), ('account_no', 'party'))
 
     def __str__(self):
         return self.name

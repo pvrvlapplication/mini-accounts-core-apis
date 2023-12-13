@@ -1,7 +1,10 @@
 # accounts/views.py
 
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+
+from core_api.PDFGenarator import SaleReportGenerator
 from .models import (
     Address,
     Bank,
@@ -39,44 +42,6 @@ from rest_framework import status
 from django.db.models import Sum
 from django.db import DatabaseError, transaction
 
-# class CompanyView(APIView):
-
-#     #permission_classes([IsAuthenticated])
-
-#     def get(self, request, id=''):
-#         if id:
-#             result = Company.objects.get(id=id)
-#             serializers = CompanySerializer(result)
-#             return Response({'success': 'success', "students":serializers.data}, status=200)
-#         result = Company.objects.all()
-#         serializers = CompanySerializer(result, many=True)
-#         return Response({'status': 'success', "students":serializers.data}, status=200)
-
-#     def post(self, request):
-#         serializer = CompanySerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-#         else:
-#             return Response({"status": "error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-#     def update(self, request, id):
-#         company_obj = Company.objects.get(id=id)
-#         serializer = CompanySerializer(company_obj, data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-#         else:
-#             return Response({"status": "error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-#     def delete(self, request, id):
-#         comp_obj = get_object_or_404(Company, pk=id)
-#         if comp_obj:
-#             comp_obj.delete()
-#             return Response({"status": "success", "data": f"{comp_obj.name} Deleted Successfully."}, status=status.HTTP_200_OK)
-#         else:
-#             return Response({"status": "error", "data": f"{id} Not Found."}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -84,9 +49,10 @@ class UserViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = UserSerializer
-    queryset = User.objects.all()
-    # def get_queryset(self):
-    #     return User.objects.filter(id=self.request.user.id)
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        return user_obj
+
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -95,16 +61,11 @@ class CompanyViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = CompanySerializer
-    queryset = Company.objects.all()
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = Company.objects.filter(user__company_id=user_obj.company.id)
+        return queryset
 
-
-# class BranchViewSet(viewsets.ModelViewSet):
-#     """
-#     A viewset for branch instances.
-#     """
-
-#     serializer_class = BranchSerializer
-#     queryset = Branch.objects.all()
 
 
 # -----Product Viewset
@@ -114,7 +75,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     
     serializer_class = ProductSerializer
-    queryset = Product.objects.all()
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = Product.objects.filter(user__company_id=user_obj.company.id)
+        return queryset
+
 
 
 # -----Party Viewset
@@ -124,9 +89,10 @@ class PartyViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PartySerializer
-    queryset = Party.objects.all()
-    # def get_queryset(self):
-    #     Party.objects.get(pk=self.request.user.id)
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = Party.objects.filter(user__company_id=user_obj.company.id)
+        return queryset
 
 
 # -----Party Address Viewset
@@ -136,7 +102,11 @@ class AddressViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = AddressSerializer
-    queryset = Address.objects.all()
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = Address.objects.filter(user__company_id=user_obj.company.id)
+        return queryset
+
 
 
 # -----Purchase Viewset
@@ -414,6 +384,16 @@ class SaleItemView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         
+class DownloadSale(APIView):
+    """To download sale report"""
+
+    def get(self, request, id):
+        obj = SaleReportGenerator()
+        pdf = obj.save()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="' + 'SaleReport.pdf' + '"'
+        return response
+                
 # -----Bank Viewset
 class BankViewSet(viewsets.ModelViewSet):
     """
