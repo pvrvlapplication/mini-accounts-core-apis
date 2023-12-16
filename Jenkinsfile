@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        docker { image 'alpine:latest' }
-    }
+    agent any
     options {
         skipStagesAfterUnstable()
     }
