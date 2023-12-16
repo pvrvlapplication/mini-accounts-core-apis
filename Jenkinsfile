@@ -15,7 +15,7 @@ pipeline {
             steps { 
                 script{
                     echo 'Build'
-                    app = docker.build("pvrvl/pvrvl-mini-accounts-core-apis")
+                    app = docker.build("pvrvl-mini-accounts-core-apis")
                 }
             }
         }
