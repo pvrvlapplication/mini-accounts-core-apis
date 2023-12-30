@@ -45,7 +45,7 @@ class SaleReportGenerator(PDFGenarator):
         #      ], 
         # 'taxble_value': 15000.0, 
         # 'invoice_value': 15000.0}
-        PDFGenarator.__init__(self, "SaleReport.pdf", "Times-Roman", "black")
+        PDFGenarator.__init__(self, "SaleReport.pdf", "Helvetica", "black")
 
     def drawHeader(self):
         self.canvas.drawCentredString(4.25 * inch, 800, "Sale Invoice")
