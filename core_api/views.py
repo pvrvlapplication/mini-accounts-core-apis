@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
-from core_api.PDFGenarator import SaleReportGenerator
+from core_api.PDFGenarator import PurchaseReportGenerator, SaleReportGenerator
 from .models import (
     Address,
     Bank,
@@ -384,14 +384,28 @@ class SaleItemView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         
-class DownloadSale(APIView):
+class DownloadSaleInvoice(APIView):
     """To download sale report"""
 
     def get(self, request, id):
-        obj = SaleReportGenerator()
+        saleObj = SaleView()
+        saleObjResponse = saleObj.get(request, id=id)
+        obj = SaleReportGenerator(saleObjResponse)
         pdf = obj.save()
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="' + 'SaleReport.pdf' + '"'
+        return response
+    
+class DownloadPurchaseInvoice(APIView):
+    """To download purchase invoice"""
+
+    def get(self, request, id):
+        purObj = PurchaseView()
+        purObjResponse = purObj.get(request, id=id)
+        obj = PurchaseReportGenerator(purObjResponse)
+        pdf = obj.save()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="' + 'PurchaseReport.pdf' + '"'
         return response
                 
 # -----Bank Viewset

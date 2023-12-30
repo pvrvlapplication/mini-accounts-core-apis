@@ -221,27 +221,27 @@ class PurchaseItem(models.Model):
             self.sgst = (
                 ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
                 if self.product.gst_slab != 0
-                else 0
+                else 0.0
             )
             self.cgst = (
                 ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
                 if self.product.gst_slab != 0
-                else 0
+                else 0.0
             )
-            self.igst = 0
+            self.igst = 0.0
         elif self.purchase.gst_type == "E":
-            self.sgst = 0
-            self.cgst = 0
+            self.sgst = 0.0
+            self.cgst = 0.0
             self.igst = (
                 (float(self.taxble_value) * float(self.product.gst_slab)) / (100)
                 if self.product.gst_slab != 0
-                else 0
+                else 0.0
             )
         elif self.purchase.gst_type == "NO":
-            self.sgst = 0
-            self.cgst = 0
-            self.igst = 0
-        self.invoice_value = float(self.taxble_value)
+            self.sgst = 0.0
+            self.cgst = 0.0
+            self.igst = 0.0
+        self.invoice_value = float(self.taxble_value) +  float(self.igst) + float(self.sgst) + float(self.cgst)
         super(PurchaseItem, self).save(*args, **kwargs)
 
 
@@ -299,27 +299,27 @@ class SaleItem(models.Model):
             self.sgst = (
                 ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
                 if self.product.gst_slab != 0
-                else 0
+                else 0.0
             )
             self.cgst = (
                 ((float(self.taxble_value) * float(self.product.gst_slab)) / 2) / (100)
                 if self.product.gst_slab != 0
-                else 0
+                else 0.0
             )
-            self.igst = 0
-        elif self.sale.gst_type == "E":
-            self.sgst = 0
-            self.cgst = 0
+            self.igst = 0.0
+        elif self.sale.gst_type == "O":
+            self.sgst = 0.0
+            self.cgst = 0.0
             self.igst = (
                 (float(self.taxble_value) * float(self.product.gst_slab)) / (100)
                 if self.product.gst_slab != 0
-                else 0
+                else 0.0
             )
         elif self.sale.gst_type == "NO":
-            self.sgst = 0
-            self.cgst = 0
-            self.igst = 0
-        self.invoice_value = float(self.taxble_value)
+            self.sgst = 0.0
+            self.cgst = 0.0
+            self.igst = 0.0
+        self.invoice_value = float(self.taxble_value) + float(self.igst) + float(self.sgst) + float(self.cgst)
         super(SaleItem, self).save(*args, **kwargs)
 
 # -------Bank Models
