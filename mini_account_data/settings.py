@@ -93,10 +93,10 @@ WSGI_APPLICATION = "mini_account_data.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'pvrvl-mini-accounts',
-        'USER': 'postgres',
-        'PASSWORD': 'pvrvl',
-        'HOST': '127.0.0.1',
+        'NAME': 'pvrvl-mini-accounts', 
+        'USER': 'postgres', 
+        'PASSWORD': 'admin',
+        'HOST': '127.0.0.1', 
         'PORT': '5432',
     }
 }

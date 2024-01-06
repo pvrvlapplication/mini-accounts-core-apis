@@ -104,7 +104,7 @@ class AddressViewSet(viewsets.ModelViewSet):
     serializer_class = AddressSerializer
     def get_queryset(self):
         user_obj = User.objects.get(id=self.request.user.id)
-        queryset = Address.objects.filter(user__company_id=user_obj.company.id)
+        queryset = Address.objects.filter(party__user__company_id=user_obj.company.id)
         return queryset
 
 
@@ -390,7 +390,7 @@ class DownloadSaleInvoice(APIView):
     def get(self, request, id):
         saleObj = SaleView()
         saleObjResponse = saleObj.get(request, id=id)
-        obj = SaleReportGenerator(saleObjResponse)
+        obj = SaleReportGenerator(saleObjResponse, request)
         pdf = obj.save()
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="' + 'SaleReport.pdf' + '"'
