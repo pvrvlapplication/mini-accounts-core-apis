@@ -390,7 +390,7 @@ class DownloadSaleInvoice(APIView):
     def get(self, request, id):
         saleObj = SaleView()
         saleObjResponse = saleObj.get(request, id=id)
-        obj = SaleReportGenerator(saleObjResponse)
+        obj = SaleReportGenerator(saleObjResponse, request)
         pdf = obj.save()
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="' + 'SaleReport.pdf' + '"'
