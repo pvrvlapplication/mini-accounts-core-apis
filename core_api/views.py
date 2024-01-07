@@ -402,7 +402,7 @@ class DownloadPurchaseInvoice(APIView):
     def get(self, request, id):
         purObj = PurchaseView()
         purObjResponse = purObj.get(request, id=id)
-        obj = PurchaseReportGenerator(purObjResponse)
+        obj = PurchaseReportGenerator(purObjResponse, request)
         pdf = obj.save()
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="' + 'PurchaseReport.pdf' + '"'
@@ -415,7 +415,10 @@ class BankViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = BankSerializer
-    queryset = Bank.objects.all()
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = Bank.objects.filter(user__company_id=user_obj.company.id)
+        return queryset
 
 # -----PartyBank Viewset
 class PartyBankViewSet(viewsets.ModelViewSet):
@@ -424,7 +427,10 @@ class PartyBankViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PartyBankSerializer
-    queryset = PartyBank.objects.all()
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = PartyBank.objects.filter(user__company_id=user_obj.company.id)
+        return queryset
 
 # -----Receipt Viewset
 class ReceiptViewSet(viewsets.ModelViewSet):
@@ -433,7 +439,10 @@ class ReceiptViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = ReceiptSerializer
-    queryset = Receipt.objects.all()
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = Receipt.objects.filter(party__user__company_id=user_obj.company.id)
+        return queryset
 
 # -----Payment Viewset
 class PaymentViewSet(viewsets.ModelViewSet):
@@ -442,6 +451,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PaymentSerializer
-    queryset = Payment.objects.all()
+    def get_queryset(self):
+        user_obj = User.objects.get(id=self.request.user.id)
+        queryset = Payment.objects.filter(party__user__company_id=user_obj.company.id)
+        return queryset
 
 

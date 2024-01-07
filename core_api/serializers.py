@@ -349,6 +349,11 @@ class ReceiptSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+    def to_representation(self, instance):
+        representation = super(ReceiptSerializer, self).to_representation(instance)
+        representation['date'] = instance.date.strftime("%b/%d/%Y, %H:%M")
+        return representation
+    
 class PaymentSerializer(serializers.ModelSerializer):
     """This serializer is used to serialize payment object."""
 
@@ -379,3 +384,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+    def to_representation(self, instance):
+        representation = super(PaymentSerializer, self).to_representation(instance)
+        representation['date'] = instance.date.strftime("%b/%d/%Y, %H:%M")
+        return representation

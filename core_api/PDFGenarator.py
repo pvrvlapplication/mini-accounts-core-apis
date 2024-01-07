@@ -6,6 +6,8 @@ from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 
+from core_api.models import Address
+
 
 class PDFGenarator():
     def __init__(self, fileName, font, fontColor):
@@ -55,17 +57,28 @@ class SaleReportGenerator(PDFGenarator):
     def companyDetails(self):
         self.setFont(fontSize=15)
         self.canvas.drawString(0.5 * inch, 10.5 * inch, self.company.name)
-        self.setFont(fontSize=13)
+        self.setFont(fontSize=12)
         self.canvas.drawString(0.5 * inch, 10.3 * inch, "{dno}, {area}, {city},".format(dno=self.company.dno, area=self.company.area, city=self.company.city) )
         self.canvas.drawString(0.5 * inch, 10.1 * inch, "{district}, {state}, {country},".format(district=self.company.district, state=self.company.state, country=self.company.country))
         self.canvas.drawString(0.5 * inch, 9.9 * inch, "{mobile}, {phone}.".format(mobile=self.company.mobile, phone=self.company.phone))
-        self.canvas.drawString(6 * inch, 10.1 * inch, "Invoice No: "+self.saleData.get('invoice_no'))
-        self.canvas.drawString(6 * inch, 10.3 * inch, "Date: "+self.saleData.get('date'))
+        self.canvas.drawString(5.5 * inch, 10.1 * inch, "Invoice No: "+self.saleData.get('invoice_no'))
+        self.canvas.drawString(5.5 * inch, 10.3 * inch, "Date: "+self.saleData.get('date'))
 
     def drawSaleInvoiceData(self):
         self.setFont(fontSize=12)
-        self.canvas.drawString(0.5 * inch, 9.3 * inch, "Party name: "+self.saleData.get('party_name'))
-        self.canvas.drawString(0.5 * inch, 9.1 * inch, "GST type: "+self.saleData.get('gst_type'))
+        self.canvas.drawString(0.5 * inch, 9.5 * inch, "Billing address")
+        self.canvas.drawString(5.5 * inch, 9.5 * inch, "Shipping address")
+        self.canvas.drawString(0.5 * inch, 9.3 * inch, self.saleData.get('party_name'))
+        # self.canvas.drawString(0.5 * inch, 9.1 * inch, "GST type: "+self.saleData.get('gst_type'))
+        self.canvas.drawString(5.5 * inch, 9.3 * inch, self.saleData.get('party_name'))
+        billAdd = Address.objects.get(id=self.saleData.get('address'))
+        shipAdd = Address.objects.get(id=self.saleData.get('shipping_address'))
+        self.canvas.drawString(0.5 * inch, 9.1 * inch, "{dno}, {area}, {city},".format(dno=billAdd.dno, area=billAdd.area, city=billAdd.city))
+        self.canvas.drawString(0.5 * inch, 8.9 * inch, "{district}, {state}, {country},".format(district=billAdd.district, state=billAdd.state, country=billAdd.country))
+        self.canvas.drawString(0.5 * inch, 8.7 * inch, "{mobile}, {phone}.".format(mobile=billAdd.mobile, phone=billAdd.phone))
+        self.canvas.drawString(5.5 * inch, 9.1 * inch, "{dno}, {area}, {city},".format(dno=shipAdd.dno, area=shipAdd.area, city=shipAdd.city))
+        self.canvas.drawString(5.5 * inch, 8.9 * inch, "{district}, {state}, {country},".format(district=shipAdd.district, state=shipAdd.state, country=shipAdd.country))
+        self.canvas.drawString(5.5 * inch, 8.7 * inch, "{mobile}, {phone}.".format(mobile=shipAdd.mobile, phone=shipAdd.phone))
 
     def drawProductsData(self):
         self.setFont(fontSize=12)
@@ -100,8 +113,9 @@ class SaleReportGenerator(PDFGenarator):
 class PurchaseReportGenerator(PDFGenarator):
     """This class is used to generate PDF Report for sale bills."""
 
-    def __init__(self, purchaseData):
+    def __init__(self, purchaseData, request):
         self.purchaseData = purchaseData.data
+        self.company = request.user.company
         # {'id': 1, 'party_name': 'test', 'date': 'Dec/09/2023, 14:51', 'comment': 'testing', 'gst_type': 'I', 'invoice_no': '1122554477', 'party': 1, 'address': 2, 'shipping_address': 2, 
         #  'purchase_items': [
         #      {'id': 1, 'product_name': 'Iron', 'price': '150.00', 'quantity': '100.00', 'sgst': '375.00', 'cgst': '375.00', 'igst': '0.00', 'taxble_value': '15000.00', 'invoice_value': '15000.00', 'sale': 1, 'product': 1}
@@ -121,13 +135,24 @@ class PurchaseReportGenerator(PDFGenarator):
         self.canvas.drawString(0.5 * inch, 10.3 * inch, "{dno}, {area}, {city},".format(dno=self.company.dno, area=self.company.area, city=self.company.city) )
         self.canvas.drawString(0.5 * inch, 10.1 * inch, "{district}, {state}, {country},".format(district=self.company.district, state=self.company.state, country=self.company.country))
         self.canvas.drawString(0.5 * inch, 9.9 * inch, "{mobile}, {phone}.".format(mobile=self.company.mobile, phone=self.company.phone))
-        self.canvas.drawString(6 * inch, 10.1 * inch, "Invoice No: "+self.saleData.get('invoice_no'))
-        self.canvas.drawString(6 * inch, 10.3 * inch, "Date: "+self.saleData.get('date'))
+        self.canvas.drawString(5.5 * inch, 10.1 * inch, "Invoice No: "+self.purchaseData.get('invoice_no'))
+        self.canvas.drawString(5.5 * inch, 10.3 * inch, "Date: "+self.purchaseData.get('date'))
 
     def drawPurchaseInvoiceData(self):
         self.setFont(fontSize=12)
-        self.canvas.drawString(1 * inch, 9.4 * inch, "Party name: "+self.purchaseData.get('vendor_name'))
-        self.canvas.drawString(1 * inch, 9.1 * inch, "GST type: "+self.purchaseData.get('gst_type'))
+        self.canvas.drawString(0.5 * inch, 9.5 * inch, "Billing address")
+        self.canvas.drawString(5.5 * inch, 9.5 * inch, "Shipping address")
+        self.canvas.drawString(0.5 * inch, 9.3 * inch, self.purchaseData.get('vendor_name'))
+        # self.canvas.drawString(0.5 * inch, 9.1 * inch, "GST type: "+self.saleData.get('gst_type'))
+        self.canvas.drawString(5.5 * inch, 9.3 * inch, self.purchaseData.get('vendor_name'))
+        billAdd = Address.objects.get(id=self.purchaseData.get('address'))
+        shipAdd = Address.objects.get(id=self.purchaseData.get('shipping_address'))
+        self.canvas.drawString(0.5 * inch, 9.1 * inch, "{dno}, {area}, {city},".format(dno=billAdd.dno, area=billAdd.area, city=billAdd.city))
+        self.canvas.drawString(0.5 * inch, 8.9 * inch, "{district}, {state}, {country},".format(district=billAdd.district, state=billAdd.state, country=billAdd.country))
+        self.canvas.drawString(0.5 * inch, 8.7 * inch, "{mobile}, {phone}.".format(mobile=billAdd.mobile, phone=billAdd.phone))
+        self.canvas.drawString(5.5 * inch, 9.1 * inch, "{dno}, {area}, {city},".format(dno=shipAdd.dno, area=shipAdd.area, city=shipAdd.city))
+        self.canvas.drawString(5.5 * inch, 8.9 * inch, "{district}, {state}, {country},".format(district=shipAdd.district, state=shipAdd.state, country=shipAdd.country))
+        self.canvas.drawString(5.5 * inch, 8.7 * inch, "{mobile}, {phone}.".format(mobile=shipAdd.mobile, phone=shipAdd.phone))
 
     def drawProductsData(self):
         data = []
